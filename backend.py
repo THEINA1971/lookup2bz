@@ -643,8 +643,9 @@ def register():
         if expires_at < datetime.now(timezone.utc):
             return jsonify({'error': 'Clé expirée'}), 400
     
-    # Vérifier si la clé est déjà utilisée (sauf si c'est une clé admin)
-    if key_data.get('user_id') and not key_data.get('is_admin'):
+    # Vérifier si la clé est déjà utilisée (vérifier used_at au lieu de user_id)
+    # user_id = créateur de la clé, used_at = date d'utilisation pour inscription
+    if key_data.get('used_at') and not key_data.get('is_admin'):
         return jsonify({'error': 'Cette clé est déjà utilisée'}), 400
     
     # Si c'est une clé admin, donner le rôle admin à l'utilisateur
@@ -678,8 +679,9 @@ def register():
     
     # Associer la clé à l'utilisateur (sauf si c'est une clé admin réutilisable)
     if not key_data.get('is_admin'):
-        key_data['user_id'] = user_id
+        key_data['used_by'] = user_id  # Utilisateur qui a utilisé la clé pour s'inscrire
         key_data['used_at'] = datetime.now(timezone.utc).isoformat()
+        # Garder user_id pour le créateur de la clé
     save_json(KEYS_FILE, keys)
     
     save_json(USERS_FILE, users)
@@ -922,7 +924,8 @@ def create_key():
     
     key_data = {
         'code': key_code,
-        'user_id': request.current_user_id if not is_admin_key else None,  # Les clés admin ne sont pas liées à un utilisateur
+        'created_by': request.current_user_id if not is_admin_key else None,  # Créateur de la clé
+        'user_id': request.current_user_id if not is_admin_key else None,  # Gardé pour compatibilité
         'created_at': now.isoformat(),
         'expires_at': expires_at,
         'duration': duration,
@@ -1531,7 +1534,7 @@ def process_payment():
             'crypto_currency': 'LTC',
             'status': 'pending',  # En attente de confirmation blockchain
             'payment_method': 'ltc',
-            'ltc_address': 'LTc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+            'ltc_address': 'LQC5GZ78kxDQkM4mKi4iVTELUL97rGGbHP',
             'transaction_hash': transaction_hash or '',
             'created_at': datetime.now(timezone.utc).isoformat(),
             'notes': 'Paiement LTC - En attente de confirmation sur la blockchain'

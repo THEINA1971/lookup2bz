@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Lookup2Bz - OSINT Platform</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5000;">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-styles.css">
+</head>
+<body class="admin-body" id="main-body">
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <div class="logo-section">
+                <img src="logo.svg" alt="Lookup2Bz Logo" class="logo-img">
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <a href="https://discord.gg/4dCtyUwzNb" target="_blank" class="discord-btn-header" title="Rejoindre notre serveur Discord">
+                <img src="discord-logo.png" alt="Discord" class="discord-logo-img">
+                <span>Discord</span>
+            </a>
+            <span id="user-email-display" class="user-email" style="margin-right: 16px; color: var(--text-muted); font-size: 14px;"></span>
+            <button onclick="goToSearch()" class="header-btn">
+                <i class="fas fa-home"></i>
+                Recherche
+            </button>
+            <button onclick="logout()" class="header-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Déconnexion
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+        <button onclick="showTab('search')" class="nav-tab active" id="tab-search">
+            <i class="fas fa-search"></i>
+            Recherche API
+        </button>
+        <button onclick="showTab('keys')" class="nav-tab" id="tab-keys">
+            <i class="fas fa-key"></i>
+            Clés d'accès
+        </button>
+        <button onclick="showTab('upload')" class="nav-tab" id="tab-upload">
+            <i class="fas fa-upload"></i>
+            Upload
+        </button>
+        <button onclick="showTab('payment')" class="nav-tab" id="tab-payment">
+            <i class="fas fa-credit-card"></i>
+            Paiement
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Search API Tab -->
+        <div id="search-tab" class="tab-content active">
+            <div class="page-header-simple">
+                <h2 class="page-title-simple">Modules de Recherche OSINT</h2>
+                <p class="page-subtitle">Sélectionnez un module pour commencer une recherche</p>
+            </div>
+
+            <!-- API Modules Grid - Simplified -->
+            <div class="api-modules-grid-simple">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Keys Management Tab -->
+        <div id="keys-tab" class="tab-content">
+            <div class="page-header-simple">
+                <h2 class="page-title-simple">Gestion des Clés d'accès</h2>
+            </div>
+
+            <!-- Create Key Card -->
+            <div class="simple-card">
+                <div class="simple-card-header">
+                    <h3>Créer une nouvelle clé</h3>
+                </div>
+                <div class="simple-card-body">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Clé d'accès</label>
+                            <div class="input-group-simple">
+                                <input type="text" id="new-key-input" placeholder="Générer ou entrer une clé" class="input-simple">
+                                <button onclick="generateKeyInput()" class="btn-secondary">Générer</button>
+                            </div>
+                            <small>Minimum 8 caractères</small>
+                        </div>
+                        <div class="form-col">
+                            <label>Durée de validité</label>
+                            <select id="key-duration" class="input-simple">
+                                <option value="1h">1 heure</option>
+                                <option value="1d" selected>1 jour</option>
+                                <option value="1w">1 semaine</option>
+                                <option value="1m">1 mois</option>
+                                <option value="lifetime">Lifetime</option>
+                            </select>
+                        </div>
+                        <div class="form-col-auto">
+                            <button onclick="createKey()" class="btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Créer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keys List -->
+            <div class="simple-card">
+                <div class="simple-card-header">
+                    <h3>Clés créées</h3>
+                    <div class="filter-tabs">
+                        <button onclick="filterKeys('all')" class="filter-tab active" id="filter-all">Toutes</button>
+                        <button onclick="filterKeys('active')" class="filter-tab" id="filter-active">Actives</button>
+                        <button onclick="filterKeys('inactive')" class="filter-tab" id="filter-inactive">Inactives</button>
+                    </div>
+                </div>
+                <div class="simple-card-body">
+                    <div id="keys-list" class="keys-list-simple">
+                        <!-- Keys will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload-tab" class="tab-content">
+            <div class="page-header-simple">
+                <h2 class="page-title-simple">Uploader une Base de Données</h2>
+            </div>
+
+            <div class="simple-card">
+                <div class="simple-card-body">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Nom de la base de données</label>
+                            <input type="text" id="db-name" placeholder="Nom descriptif" class="input-simple">
+                        </div>
+                        <div class="form-col">
+                            <label>Catégorie</label>
+                            <select id="db-category" class="input-simple">
+                                <option value="general" selected>Général</option>
+                                <option value="breach">Breach</option>
+                                <option value="social">Social Media</option>
+                                <option value="crypto">Crypto</option>
+                                <option value="network">Network</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col-full">
+                            <label>Description (optionnel)</label>
+                            <textarea id="db-description" placeholder="Description de la base de données" class="input-simple" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col-full">
+                            <label>Fichier à uploader</label>
+                            <div class="file-upload-simple">
+                                <input type="file" id="db-file" class="file-input-hidden" accept=".txt,.csv,.json" onchange="handleFileSelect(this)">
+                                <button onclick="document.getElementById('db-file').click()" class="btn-secondary">
+                                    <i class="fas fa-folder-open"></i>
+                                    Choisir un fichier
+                                </button>
+                                <span id="file-name" class="file-name-simple">Aucun fichier choisi</span>
+                            </div>
+                            <small>Formats supportés: TXT, CSV, JSON</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col-full">
+                            <button onclick="uploadDatabase()" class="btn-primary btn-large">
+                                <i class="fas fa-upload"></i>
+                                Uploader
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Tab -->
+        <div id="payment-tab" class="tab-content">
+            <div class="page-header-simple">
+                <h2 class="page-title-simple">Plans et Paiement</h2>
+                <p class="page-subtitle">Choisissez le plan qui correspond à vos besoins</p>
+            </div>
+
+            <!-- Current Subscription Status -->
+            <div class="simple-card" id="current-subscription-card" style="display: none;">
+                <div class="simple-card-header">
+                    <h3>Votre Abonnement</h3>
+                </div>
+                <div class="simple-card-body">
+                    <div id="subscription-status"></div>
+                </div>
+            </div>
+
+            <!-- Payment Plans -->
+            <div class="payment-plans-grid">
+                <!-- Basic Plan -->
+                <div class="payment-plan-card">
+                    <div class="plan-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3>Basic</h3>
+                        <div class="plan-price">
+                            <span class="price-amount">9.99</span>
+                            <span class="price-period">€ /mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span><strong>100</strong> recherches/mois</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Accès aux APIs de base</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Support par email</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>1 clé d'accès</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-times"></i>
+                            <span class="feature-disabled">APIs premium</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-times"></i>
+                            <span class="feature-disabled">Clés d'accès illimitées</span>
+                        </div>
+                    </div>
+                    <button onclick="selectPlan('basic')" class="plan-btn">
+                        <i class="fas fa-arrow-right"></i>
+                        Choisir Basic
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="payment-plan-card featured">
+                    <div class="plan-badge">⭐ Populaire</div>
+                    <div class="plan-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h3>Pro</h3>
+                        <div class="plan-price">
+                            <span class="price-amount">29.99</span>
+                            <span class="price-period">€ /mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span><strong>1000</strong> recherches/mois</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Accès à <strong>toutes</strong> les APIs</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Support <strong>prioritaire</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>APIs premium incluses</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Jusqu'à <strong>10</strong> clés d'accès</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Export des résultats</span>
+                        </div>
+                    </div>
+                    <button onclick="selectPlan('pro')" class="plan-btn plan-btn-featured">
+                        <i class="fas fa-rocket"></i>
+                        Choisir Pro
+                    </button>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="payment-plan-card">
+                    <div class="plan-header">
+                        <div class="plan-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h3>Premium</h3>
+                        <div class="plan-price">
+                            <span class="price-amount">99.99</span>
+                            <span class="price-period">€ /mois</span>
+                        </div>
+                    </div>
+                    <div class="plan-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span><strong>Recherches illimitées</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Accès à <strong>toutes</strong> les APIs</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Support <strong>24/7</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>APIs premium + <strong>exclusives</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span><strong>Clés d'accès illimitées</strong></span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Accès API en priorité</span>
+                        </div>
+                    </div>
+                    <button onclick="selectPlan('premium')" class="plan-btn">
+                        <i class="fas fa-gem"></i>
+                        Choisir Premium
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Form Modal -->
+            <div id="payment-modal" class="payment-modal" style="display: none;">
+                <div class="payment-modal-content">
+                    <div class="payment-modal-header">
+                        <h3>Finaliser le Paiement</h3>
+                        <button onclick="closePaymentModal()" class="modal-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="payment-modal-body">
+                        <div class="selected-plan-info">
+                            <h4 id="selected-plan-name">Plan Pro</h4>
+                            <p class="plan-price-display" id="selected-plan-price">29.99€ / mois</p>
+                        </div>
+                        
+                        <form id="payment-form" onsubmit="processPayment(event)">
+                            <div class="form-group">
+                                <label>Nom sur la carte</label>
+                                <input type="text" id="card-name" placeholder="Jean Dupont" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Numéro de carte</label>
+                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Date d'expiration</label>
+                                    <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>CVV</label>
+                                    <input type="text" id="card-cvv" placeholder="123" maxlength="4" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Email de facturation</label>
+                                <input type="email" id="billing-email" placeholder="email@example.com" required>
+                            </div>
+                            <button type="submit" class="btn-payment-submit">
+                                <i class="fas fa-lock"></i>
+                                Payer maintenant
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="simple-card" style="margin-top: 32px;">
+                <div class="simple-card-header">
+                    <h3>Historique des Paiements</h3>
+                </div>
+                <div class="simple-card-body">
+                    <div id="payment-history">
+                        <p style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            Chargement de l'historique...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- API Detail Page -->
+    <div id="api-detail-page" class="api-detail-page">
+        <div class="api-detail-header-simple">
+            <button onclick="closeAPIDetail()" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="api-header-info">
+                <div class="api-icon-circle" id="detail-api-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div>
+                    <h1 id="detail-api-name" class="api-name-simple">Module API</h1>
+                    <p id="detail-api-subtitle" class="api-subtitle-simple">Description</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-detail-content-simple">
+            <!-- Quick Info -->
+            <div class="info-boxes">
+                <div class="info-box">
+                    <div class="info-box-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div>
+                        <div class="info-box-label">Type</div>
+                        <div class="info-box-value" id="info-type">-</div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-box-icon">
+                        <i class="fas fa-keyboard"></i>
+                    </div>
+                    <div>
+                        <div class="info-box-label">Format</div>
+                        <div class="info-box-value" id="info-format">-</div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-box-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div>
+                        <div class="info-box-label">Endpoint</div>
+                        <div class="info-box-value" id="info-endpoint" style="font-family: 'Courier New', monospace; font-size: 11px;">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Box -->
+            <div class="search-box-simple">
+                <div class="search-box-header">
+                    <h3>Recherche</h3>
+                    <div id="detail-detection-badge" class="status-badge" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="detail-detection-text"></span>
+                    </div>
+                </div>
+                <div class="search-input-large">
+                    <i class="fas fa-search search-icon-large"></i>
+                    <input 
+                        type="text" 
+                        id="detail-search-input" 
+                        placeholder="Entrez votre recherche..."
+                        class="input-large"
+                        onkeypress="if(event.key === 'Enter') performDetailSearch()"
+                        oninput="detectDetailInputType()"
+                    >
+                    <button onclick="performDetailSearch()" class="btn-search-large">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="examples-box">
+                    <div class="examples-label">Exemples:</div>
+                    <div id="examples-list" class="examples-list">
+                        <!-- Examples will be populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- How it Works -->
+            <div class="how-it-works-simple">
+                <h3>
+                    <i class="fas fa-question-circle"></i>
+                    Comment ça fonctionne ?
+                </h3>
+                <div class="steps-simple">
+                    <div class="step-simple">
+                        <div class="step-number-simple">1</div>
+                        <div class="step-content-simple">
+                            <strong>Entrez votre requête</strong>
+                            <p>Saisissez les informations dans le champ de recherche ci-dessus</p>
+                        </div>
+                    </div>
+                    <div class="step-simple">
+                        <div class="step-number-simple">2</div>
+                        <div class="step-content-simple">
+                            <strong>Lancez la recherche</strong>
+                            <p>Cliquez sur la flèche ou appuyez sur Entrée pour envoyer la requête</p>
+                        </div>
+                    </div>
+                    <div class="step-simple">
+                        <div class="step-number-simple">3</div>
+                        <div class="step-content-simple">
+                            <strong>Consultez les résultats</strong>
+                            <p>Les données trouvées s'affichent automatiquement ci-dessous</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="detail-results-section" class="results-section-simple" style="display: none;">
+                <div class="results-header-simple">
+                    <h3>
+                        <i class="fas fa-database"></i>
+                        Résultats
+                        <span class="results-badge" id="detail-results-count">0</span>
+                    </h3>
+                    <div class="results-actions-simple">
+                        <button onclick="copyDetailResults()" class="btn-icon">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button onclick="clearDetailResults()" class="btn-icon danger">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="detail-results-container" class="results-grid-simple">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification-simple hidden">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text"></span>
+    </div>
+
+        <script src="config.js"></script>
+        <script src="osint-panel.js"></script>
+        <script src="admin-script.js"></script>
+        <script src="particles.js"></script>
+    <script>
+        // Force populate modules after all scripts are loaded
+        window.addEventListener('load', () => {
+            console.log('Window loaded, checking API_CONFIG...');
+            if (typeof API_CONFIG !== 'undefined') {
+                console.log('API_CONFIG available on window load, populating modules...');
+                setTimeout(() => {
+                    if (typeof populateAPIModules === 'function') {
+                        populateAPIModules();
+                    } else {
+                        console.error('populateAPIModules function not found');
+                    }
+                }, 500);
+            } else {
+                console.error('API_CONFIG not available on window load');
+            }
+        });
+    </script>
+</body>
+</html>

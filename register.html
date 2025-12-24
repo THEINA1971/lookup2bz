@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Lookup2Bz</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-styles.css">
+    <script src="config.js"></script>
+</head>
+<body class="admin-body">
+    <!-- Discord Button -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <a href="https://discord.gg/4dCtyUwzNb" target="_blank" class="discord-btn-fixed" title="Rejoindre notre serveur Discord">
+            <img src="discord-logo.png" alt="Discord" class="discord-logo-img-fixed">
+            <span>Discord</span>
+        </a>
+    </div>
+    
+    <canvas id="particles-js"></canvas>
+    
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="logo.svg" alt="Lookup2Bz" class="auth-logo">
+                <h1>Créer un compte</h1>
+                <p>Rejoignez Lookup2Bz pour accéder aux outils OSINT</p>
+            </div>
+
+            <!-- Formulaire d'inscription simplifié -->
+            <form onsubmit="registerUser(event)" class="auth-form">
+                <div class="auth-form-group">
+                    <label>
+                        <i class="fas fa-envelope"></i>
+                        Adresse email
+                    </label>
+                    <input type="email" id="register-email" placeholder="votre@email.com" class="auth-input" required>
+                </div>
+                
+                <div class="auth-form-group">
+                    <label>
+                        <i class="fas fa-lock"></i>
+                        Mot de passe
+                    </label>
+                    <input type="password" id="register-password" placeholder="Minimum 8 caractères" class="auth-input" required>
+                    <small>Au moins 8 caractères</small>
+                </div>
+                
+                <div class="auth-form-group">
+                    <label>
+                        <i class="fas fa-key"></i>
+                        Clé d'accès
+                    </label>
+                    <input type="text" id="register-key" placeholder="Votre clé d'accès" class="auth-input" required>
+                    <small>Clé fournie lors de l'achat</small>
+                </div>
+                
+                <button type="submit" class="auth-btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Créer le compte
+                </button>
+                
+                <div id="register-error" class="auth-error"></div>
+            </form>
+
+            <!-- Étape de succès -->
+            <div id="step-success" class="auth-step">
+                <div class="auth-success-box">
+                    <i class="fas fa-check-circle"></i>
+                    <h2>Compte créé avec succès !</h2>
+                    <p>Redirection vers le panel...</p>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                <p>Déjà un compte ? <a href="login.html" class="auth-link">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="particles.js"></script>
+    <script>
+        async function registerUser(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('register-email').value.trim().toLowerCase();
+            const password = document.getElementById('register-password').value;
+            const key = document.getElementById('register-key').value.trim();
+            const errorDiv = document.getElementById('register-error');
+            
+            // Validation
+            if (!email || !email.includes('@')) {
+                errorDiv.textContent = 'Veuillez entrer une adresse email valide';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (!password || password.length < 8) {
+                errorDiv.textContent = 'Le mot de passe doit contenir au moins 8 caractères';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!key) {
+                errorDiv.textContent = 'Veuillez entrer votre clé d\'accès';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            const btn = event.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                // Détecter si on est en file:// ou http://
+                const isFileProtocol = window.location.protocol === 'file:';
+                if (isFileProtocol) {
+                    errorDiv.innerHTML = `
+                        <strong>⚠️ Erreur de protocole</strong><br>
+                        La page ne peut pas être ouverte en <code>file://</code><br>
+                        Utilisez un serveur HTTP local :<br>
+                        <code style="background: rgba(239,68,68,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">python -m http.server 8000</code><br>
+                        Puis ouvrez : <code style="background: rgba(239,68,68,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">http://localhost:8000/register.html</code>
+                    `;
+                    errorDiv.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Créer le compte';
+                    return;
+                }
+                
+                const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+                const response = await fetch(`${backendUrl}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        key: key
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Stocker le token
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_role', data.user.role);
+                    localStorage.setItem('user_email', data.user.email);
+                    
+                    // Afficher le succès
+                    document.querySelector('.auth-form').style.display = 'none';
+                    document.getElementById('step-success').classList.add('active');
+                    
+                    // Rediriger vers le panel
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = data.error || 'Erreur lors de la création du compte';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorDiv.innerHTML = `
+                        <strong>⚠️ Impossible de se connecter au serveur</strong><br>
+                        Assurez-vous que le backend est démarré sur le port 5000 :<br>
+                        <code style="background: rgba(239,68,68,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">python backend.py</code>
+                    `;
+                } else {
+                    errorDiv.textContent = 'Erreur de connexion au serveur : ' + error.message;
+                }
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Créer le compte';
+            }
+        }
+    </script>
+</body>
+</html>

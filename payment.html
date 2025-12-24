@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>Paiement Sécurisé - Lookup2Bz</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5000 https://api.coingecko.com;">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-styles.css">
+    <style>
+        .payment-page-container {
+            min-height: 100vh;
+            background: var(--bg);
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background for payment page */
+        .payment-page-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(220, 38, 38, 0.08) 0%, transparent 50%);
+            z-index: 0;
+            animation: backgroundPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .payment-page-content {
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .payment-header h1 {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 0%, #f87171 50%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .payment-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        .selected-plan-card {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(10, 10, 10, 0.9) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.4);
+            border-radius: 20px;
+            padding: 40px 32px;
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(239, 68, 68, 0.2),
+                inset 0 0 40px rgba(239, 68, 68, 0.05);
+        }
+
+        .selected-plan-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%);
+            animation: rotate 15s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .selected-plan-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .selected-plan-card h3 {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .selected-plan-price {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f87171, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-light);
+            text-decoration: none;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+            transform: translateX(-4px);
+        }
+
+        .security-badge {
+            margin-top: 40px;
+            padding: 28px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .security-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .security-badge > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .security-badge-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .security-badge-content i {
+            font-size: 32px;
+            color: var(--primary);
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+        }
+
+        .security-badge-content strong {
+            display: block;
+            color: var(--text);
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .security-badge-content p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .security-features {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 20px;
+            border-top: 1px solid rgba(239, 68, 68, 0.2);
+            justify-content: center;
+        }
+
+        .security-features span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .security-features span i {
+            color: var(--primary-light);
+        }
+
+        /* Payment Methods Grid */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .payment-method-card {
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .payment-method-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(239, 68, 68, 0.1) 0%,
+                rgba(220, 38, 38, 0.05) 50%,
+                rgba(239, 68, 68, 0.1) 100%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .payment-method-card:hover {
+            border-color: rgba(239, 68, 68, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.4),
+                0 0 0 1px rgba(239, 68, 68, 0.2),
+                inset 0 0 40px rgba(239, 68, 68, 0.05);
+        }
+
+        .payment-method-card:hover::before {
+            opacity: 1;
+        }
+
+        .payment-method-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .payment-method-card input[type="radio"]:checked + .payment-method-label {
+            color: var(--text);
+        }
+
+        .payment-method-card:has(input[type="radio"]:checked) {
+            border-color: rgba(239, 68, 68, 0.8);
+            background: linear-gradient(135deg, 
+                rgba(239, 68, 68, 0.15) 0%,
+                rgba(0, 0, 0, 0.7) 50%,
+                rgba(220, 38, 38, 0.1) 100%
+            );
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.5),
+                0 0 0 2px rgba(239, 68, 68, 0.4),
+                inset 0 0 60px rgba(239, 68, 68, 0.1);
+        }
+
+        .payment-method-card:has(input[type="radio"]:checked)::before {
+            opacity: 1;
+        }
+
+        .payment-method-label {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .payment-method-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+            border-radius: 12px;
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .payment-method-card:hover .payment-method-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: scale(1.1);
+        }
+
+        .payment-method-card:has(input[type="radio"]:checked) .payment-method-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.3));
+            border-color: rgba(239, 68, 68, 0.7);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .payment-method-icon i {
+            font-size: 32px;
+            color: var(--primary);
+            filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
+        }
+
+        .payment-method-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .payment-method-info h4 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .payment-method-info p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Instructions Section */
+        .payment-instructions {
+            margin-top: 32px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .instructions-box {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(10, 10, 10, 0.7) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions-box h4 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .instructions-box h4 i {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        /* PayPal Email Section Enhanced */
+        .paypal-email-section {
+            margin-bottom: 32px;
+        }
+
+        .payment-email-box-enhanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.4);
+            border-radius: 12px;
+            padding: 16px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .payment-email-box-enhanced:hover {
+            border-color: rgba(239, 68, 68, 0.7);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .email-display {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .email-code {
+            font-family: 'Fira Code', 'Source Code Pro', monospace;
+            font-size: 16px;
+            color: var(--primary-light);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            word-break: break-all;
+            flex: 1;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .copy-btn-enhanced {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.15));
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            border-radius: 8px;
+            color: var(--primary-light);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .copy-btn-enhanced:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.25));
+            border-color: rgba(239, 68, 68, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .copy-btn-enhanced:active {
+            transform: translateY(0);
+        }
+
+        /* Step by Step Guide */
+        .friends-family-guide {
+            margin-top: 32px;
+        }
+
+        .step-by-step-guide {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(10, 10, 10, 0.7) 100%);
+            transform: translateX(4px);
+        }
+
+        .step-item.highlight-step {
+            border-color: rgba(239, 68, 68, 0.6);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(220, 38, 38, 0.1) 100%);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            border-radius: 50%;
+            color: var(--primary-light);
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .step-item.highlight-step .step-number {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.5), rgba(220, 38, 38, 0.4));
+            border-color: rgba(239, 68, 68, 0.8);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+            }
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            display: block;
+            color: var(--text);
+            font-size: 15px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .step-content ul {
+            margin: 8px 0 0 20px;
+            padding: 0;
+        }
+
+        .step-content li {
+            margin: 8px 0;
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Discord Button Fixed Styles */
+        .discord-btn-fixed {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #5865F2 0%, #4752C4 50%, #3C45A5 100%);
+            border: 2px solid rgba(88, 101, 242, 0.7);
+            border-radius: 14px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 6px 20px rgba(88, 101, 242, 0.5),
+                0 0 35px rgba(88, 101, 242, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .discord-btn-fixed::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .discord-btn-fixed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.7s ease, height 0.7s ease;
+        }
+
+        .discord-btn-fixed:hover::before {
+            left: 100%;
+        }
+
+        .discord-btn-fixed:hover::after {
+            width: 400px;
+            height: 400px;
+        }
+
+        .discord-btn-fixed:hover {
+            background: linear-gradient(135deg, #4752C4 0%, #5865F2 50%, #7289DA 100%);
+            border-color: rgba(88, 101, 242, 1);
+            box-shadow: 
+                0 8px 30px rgba(88, 101, 242, 0.7),
+                0 0 50px rgba(88, 101, 242, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            transform: translateY(-4px) scale(1.08);
+        }
+
+        .discord-btn-fixed:active {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .discord-logo-img-fixed {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            animation: discordPulseFixed 2.5s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes discordPulseFixed {
+            0%, 100% {
+                filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                filter: drop-shadow(0 0 18px rgba(255, 255, 255, 1));
+                transform: scale(1.18) rotate(5deg);
+            }
+        }
+
+        .discord-btn-fixed:hover .discord-logo-img-fixed {
+            animation: discordPulseFixedHover 1s ease-in-out infinite;
+        }
+
+        @keyframes discordPulseFixedHover {
+            0%, 100% {
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+                transform: scale(1.15) rotate(0deg);
+            }
+            50% {
+                filter: drop-shadow(0 0 25px rgba(255, 255, 255, 1));
+                transform: scale(1.3) rotate(-5deg);
+            }
+        }
+
+        .discord-btn-fixed span {
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .payment-methods {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .payment-page-content {
+                max-width: 100%;
+            }
+
+            .payment-method-label {
+                gap: 16px;
+            }
+
+            .payment-method-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .payment-method-icon i {
+                font-size: 24px;
+            }
+
+            .payment-email-box-enhanced {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .copy-btn-enhanced {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .step-item {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .step-number {
+                align-self: flex-start;
+            }
+
+            .discord-btn-fixed {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .discord-btn-fixed span {
+                display: none;
+            }
+            
+            .discord-logo-img-fixed {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
+</head>
+<body class="admin-body">
+    <!-- Discord Button -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <a href="https://discord.gg/4dCtyUwzNb" target="_blank" class="discord-btn-fixed" title="Rejoindre notre serveur Discord">
+            <img src="discord-logo.png" alt="Discord" class="discord-logo-img-fixed">
+            <span>Discord</span>
+        </a>
+    </div>
+    
+    <div class="payment-page-container">
+        <div class="payment-page-content">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Retour au panel
+            </a>
+
+            <div class="payment-header">
+                <h1>Finaliser votre achat</h1>
+                <p>Complétez votre paiement pour activer votre abonnement</p>
+            </div>
+
+            <!-- Selected Plan Info -->
+            <div class="selected-plan-card" id="selected-plan-info">
+                <h3 id="plan-name">Plan Pro</h3>
+                <div class="selected-plan-price" id="plan-price">29.99€ / mois</div>
+                <p style="color: var(--text-muted); margin: 0;">Facturation mensuelle</p>
+            </div>
+
+            <!-- Payment Method Selection -->
+            <div class="simple-card" style="margin-bottom: 40px; border-radius: 20px; overflow: hidden;">
+                <div class="simple-card-header" style="padding: 24px 28px; border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                    <h3 style="margin: 0; font-size: 22px; font-weight: 700; color: var(--text);">Choisissez votre moyen de paiement</h3>
+                </div>
+                <div class="simple-card-body" style="padding: 32px 28px;">
+                    <div class="payment-methods">
+                        <div class="payment-method-card" onclick="selectPaymentMethod('paypal')">
+                            <input type="radio" name="payment-method" id="paypal-method" value="paypal" checked>
+                            <label for="paypal-method" class="payment-method-label">
+                                <div class="payment-method-icon">
+                                    <i class="fab fa-paypal"></i>
+                                </div>
+                                <div class="payment-method-info">
+                                    <h4>PayPal</h4>
+                                    <p>Paiement via PayPal (Amis et Proches)</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="payment-method-card" onclick="selectPaymentMethod('ltc')">
+                            <input type="radio" name="payment-method" id="ltc-method" value="ltc">
+                            <label for="ltc-method" class="payment-method-label">
+                                <div class="payment-method-icon">
+                                    <i class="fab fa-bitcoin"></i>
+                                </div>
+                                <div class="payment-method-info">
+                                    <h4>Litecoin (LTC)</h4>
+                                    <p>Paiement en cryptomonnaie</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- PayPal Instructions -->
+                    <div id="paypal-instructions" class="payment-instructions" style="display: block;">
+                        <div class="instructions-box">
+                            <h4><i class="fab fa-paypal"></i> Instructions PayPal</h4>
+                            <div class="instructions-content">
+                                
+                                <!-- Email PayPal Section -->
+                                <div class="paypal-email-section">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                        <i class="fas fa-envelope-circle-check" style="font-size: 24px; color: var(--primary);"></i>
+                                        <div>
+                                            <strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 4px;">1. Email PayPal de destination</strong>
+                                            <p style="margin: 0; color: var(--text-muted); font-size: 13px;">Copiez cet email pour envoyer le paiement</p>
+                                        </div>
+                                    </div>
+                                    <div class="payment-email-box-enhanced">
+                                        <div class="email-display">
+                                            <i class="fab fa-paypal" style="color: var(--primary); margin-right: 12px;"></i>
+                                            <code id="paypal-email" class="email-code">u8625172031@gmail.com</code>
+                                        </div>
+                                        <button onclick="copyPayPalEmail()" class="copy-btn-enhanced">
+                                            <i class="fas fa-copy"></i>
+                                            <span>Copier</span>
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; border-left: 3px solid var(--primary);">
+                                        <p style="margin: 0; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-info-circle" style="color: var(--primary-light);"></i>
+                                            <strong>Montant à envoyer :</strong> <span id="paypal-amount" style="color: var(--primary-light); font-size: 16px; margin-left: 8px;"></span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Instructions détaillées Friends & Family -->
+                                <div class="friends-family-guide" style="margin-top: 32px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                                        <i class="fas fa-users" style="font-size: 24px; color: var(--primary);"></i>
+                                        <div>
+                                            <strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 4px;">2. Comment envoyer en "Amis et Proches"</strong>
+                                            <p style="margin: 0; color: var(--text-muted); font-size: 13px;">Suivez ces étapes pour éviter les frais</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="step-by-step-guide">
+                                        <div class="step-item">
+                                            <div class="step-number">1</div>
+                                            <div class="step-content">
+                                                <strong>Connectez-vous à PayPal</strong>
+                                                <p>Allez sur <a href="https://www.paypal.com" target="_blank" style="color: var(--primary-light); text-decoration: underline;">paypal.com</a> ou ouvrez l'application PayPal mobile, puis connectez-vous à votre compte</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="step-item">
+                                            <div class="step-number">2</div>
+                                            <div class="step-content">
+                                                <strong>Cliquez sur "Envoyer" ou "Send"</strong>
+                                                <p>Dans le menu principal (application ou site web), trouvez et cliquez sur le bouton <strong>"Envoyer"</strong> ou <strong>"Send"</strong></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="step-item">
+                                            <div class="step-number">3</div>
+                                            <div class="step-content">
+                                                <strong>Entrez l'email de destination</strong>
+                                                <p>Dans la barre de recherche, saisissez ou collez l'adresse email :</p>
+                                                <code style="background: rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--primary-light);">u8625172031@gmail.com</code>
+                                            </div>
+                                        </div>
+
+                                        <div class="step-item">
+                                            <div class="step-number">4</div>
+                                            <div class="step-content">
+                                                <strong>Saisissez le montant et la devise</strong>
+                                                <p>Entrez le montant exact : <strong id="paypal-amount-step" style="color: var(--primary-light); font-size: 16px;"></strong></p>
+                                                <p style="margin-top: 6px; color: var(--text-muted); font-size: 13px;">Choisissez la devise (EUR, USD, etc.) selon votre compte PayPal</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="step-item highlight-step">
+                                            <div class="step-number">5</div>
+                                            <div class="step-content">
+                                                <strong style="color: var(--primary-light);">⚠️ ÉTAPE CRUCIALE : Vérifiez le type de paiement</strong>
+                                                <p style="margin-bottom: 12px;">Sous le montant, vous verrez une option <strong>"Type de paiement"</strong> ou <strong>"Payment type"</strong>.</p>
+                                                <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary); margin-top: 8px;">
+                                                    <p style="margin: 0 0 8px 0; font-weight: 600; color: var(--text);">Cliquez sur <strong>"Changer"</strong> ou <strong>"Change"</strong> si nécessaire, puis vérifiez :</p>
+                                                    <ul style="margin: 8px 0 0 20px; padding: 0;">
+                                                        <li style="margin: 8px 0; color: var(--success); line-height: 1.6;">
+                                                            <strong>✅ "Envoi à un ami"</strong> ou <strong>"Cadeau/Privé"</strong> ou <strong>"Friends & Family"</strong>
+                                                            <span style="color: var(--text-muted); display: block; margin-top: 4px;">→ C'est la bonne option ! Aucun frais ne sera déduit.</span>
+                                                        </li>
+                                                        <li style="margin: 8px 0; color: var(--danger); line-height: 1.6;">
+                                                            <strong>❌ "Paiement d'un objet ou service"</strong> ou <strong>"Goods & Services"</strong>
+                                                            <span style="color: var(--text-muted); display: block; margin-top: 4px;">→ NE CHOISISSEZ PAS ! Des frais seront déduits et ce n'est pas ce que nous demandons.</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="step-item">
+                                            <div class="step-number">6</div>
+                                            <div class="step-content">
+                                                <strong>Vérifiez et envoyez</strong>
+                                                <p>Vérifiez toutes les informations (email, montant, type de paiement) et cliquez sur <strong>"Envoyer l'argent maintenant"</strong> ou <strong>"Send money now"</strong></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-top: 20px; padding: 18px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1)); border-radius: 12px; border: 2px solid rgba(239, 68, 68, 0.4); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);">
+                                        <div style="display: flex; align-items: start; gap: 14px;">
+                                            <i class="fas fa-exclamation-triangle" style="font-size: 22px; color: var(--warning); flex-shrink: 0; margin-top: 2px; filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));"></i>
+                                            <div>
+                                                <strong style="color: var(--text); display: block; margin-bottom: 8px; font-size: 15px;">⚠️ Note importante</strong>
+                                                <p style="margin: 0 0 8px 0; color: var(--text); font-size: 14px; line-height: 1.6;">
+                                                    Si vous voyez <strong>"Paiement d'un objet ou service"</strong> (Goods & Services), vous paierez des frais et le receveur sera protégé, 
+                                                    <strong style="color: var(--primary-light);">mais ce n'est pas ce que nous demandons</strong>.
+                                                </p>
+                                                <p style="margin: 0; color: var(--text); font-size: 14px; line-height: 1.6;">
+                                                    <strong style="color: var(--success);">Assurez-vous toujours de choisir "Envoi à un ami" ou "Friends & Family"</strong> pour éviter les frais et permettre l'activation rapide de votre abonnement.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Après le paiement -->
+                                <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(239, 68, 68, 0.2);">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                                        <i class="fas fa-check-circle" style="font-size: 24px; color: var(--success);"></i>
+                                        <div>
+                                            <strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 4px;">3. Confirmez votre paiement</strong>
+                                            <p style="margin: 0; color: var(--text-muted); font-size: 13px;">Remplissez ces informations après avoir effectué le paiement</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-top: 20px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                            <i class="fas fa-envelope" style="color: var(--primary-light);"></i>
+                                            <span>Email PayPal utilisé pour le paiement</span>
+                                        </label>
+                                        <input type="email" id="paypal-sender-email" placeholder="votre-email@example.com" required autocomplete="email" style="width: 100%; padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: var(--text); font-size: 14px; transition: all 0.3s ease;">
+                                        <small style="color: var(--text-muted); font-size: 12px; margin-top: 6px; display: block;">
+                                            L'email que vous avez utilisé pour envoyer le paiement PayPal
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-top: 20px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                            <i class="fas fa-receipt" style="color: var(--primary-light);"></i>
+                                            <span>ID de transaction PayPal <span style="color: var(--text-muted); font-weight: normal;">(optionnel mais recommandé)</span></span>
+                                        </label>
+                                        <input type="text" id="paypal-transaction-id" placeholder="Ex: 5XJ1234567890123" pattern="[A-Z0-9]+" maxlength="20" style="width: 100%; padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: var(--text); font-size: 14px; font-family: 'Fira Code', monospace; transition: all 0.3s ease;">
+                                        <small style="color: var(--text-muted); font-size: 12px; margin-top: 6px; display: block;">
+                                            <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                                            Trouvez cet ID dans l'email de confirmation PayPal ou dans l'historique de vos transactions
+                                        </small>
+                                    </div>
+                                </div>
+                                <div style="padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 16px;">
+                                    <p style="margin: 0; color: var(--text); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-info-circle" style="color: #10b981;"></i>
+                                        <strong>Important :</strong> Après avoir cliqué sur le bouton, votre paiement sera enregistré. L'activation de votre abonnement se fera après vérification manuelle (généralement sous 24h).
+                                    </p>
+                                </div>
+                                <button type="button" onclick="submitPayPalPayment()" class="btn-payment-submit">
+                                    <i class="fab fa-paypal"></i>
+                                    J'ai effectué le paiement PayPal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LTC Instructions -->
+                    <div id="ltc-instructions" class="payment-instructions" style="display: none;">
+                        <div class="instructions-box">
+                            <h4><i class="fab fa-bitcoin"></i> Instructions Litecoin</h4>
+                            <div class="instructions-content">
+                                <p><strong>1. Montant à envoyer :</strong></p>
+                                <div class="crypto-amount-box">
+                                    <span class="crypto-amount" id="ltc-amount">Calcul en cours...</span>
+                                    <span class="crypto-currency">LTC</span>
+                                </div>
+                                <p style="margin-top: 16px;"><strong>2. Adresse de portefeuille :</strong></p>
+                                <div class="payment-email-box">
+                                    <code id="ltc-address">LTc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code>
+                                    <button onclick="copyLTCAddress()" class="copy-btn">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <p style="margin-top: 16px; color: var(--warning);"><strong>⚠️ Important :</strong></p>
+                                <ul class="instructions-list">
+                                    <li>Vérifiez bien l'adresse avant d'envoyer</li>
+                                    <li>Envoyez exactement le montant indiqué</li>
+                                    <li>Les transactions LTC peuvent prendre quelques minutes</li>
+                                </ul>
+                                <p style="margin-top: 16px;"><strong>3. Après le paiement :</strong></p>
+                                <p style="color: var(--text-muted);">Une fois la transaction confirmée sur le réseau, votre abonnement sera activé automatiquement.</p>
+                                <div class="form-group" style="margin-top: 20px;">
+                                    <label>
+                                        <i class="fas fa-hashtag"></i>
+                                        Hash de transaction LTC (optionnel mais recommandé)
+                                    </label>
+                                    <input type="text" id="ltc-transaction-hash" placeholder="Ex: a1b2c3d4e5f6..." pattern="[a-fA-F0-9]+" maxlength="64">
+                                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 4px; display: block;">
+                                        Le hash de transaction permet une vérification plus rapide
+                                    </small>
+                                </div>
+                                <div style="padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 16px;">
+                                    <p style="margin: 0; color: var(--text); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-info-circle" style="color: #10b981;"></i>
+                                        <strong>Note :</strong> La vérification de la transaction sur la blockchain peut prendre quelques minutes. Votre abonnement sera activé automatiquement une fois confirmé.
+                                    </p>
+                                </div>
+                                <button type="button" onclick="submitLTCPayment()" class="btn-payment-submit">
+                                    <i class="fab fa-bitcoin"></i>
+                                    J'ai effectué le paiement LTC
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Info -->
+            <div class="security-badge">
+                <div class="security-badge-content">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Paiement 100% sécurisé</strong>
+                        <p>Vos données sont cryptées et protégées</p>
+                    </div>
+                </div>
+                <div class="security-features">
+                    <span><i class="fas fa-lock"></i> SSL/TLS</span>
+                    <span><i class="fas fa-user-shield"></i> Protection</span>
+                    <span><i class="fas fa-check-circle"></i> Vérifié</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification-simple hidden">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text"></span>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="admin-script.js"></script>
+    <script>
+        // Récupérer le plan depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const planId = urlParams.get('plan');
+        
+        let selectedPlanId = planId || 'pro';
+        let paymentPlans = {};
+
+        // Charger les plans disponibles
+        async function loadPlans() {
+            try {
+                const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+                const response = await fetch(`${backendUrl}/api/payment/plans`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    paymentPlans = data.plans;
+                    displaySelectedPlan();
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des plans:', error);
+            }
+        }
+
+        function displaySelectedPlan() {
+            const plan = paymentPlans[selectedPlanId];
+            if (!plan) {
+                // Plan par défaut si non trouvé
+                document.getElementById('plan-name').textContent = 'Plan Pro';
+                document.getElementById('plan-price').textContent = '29.99€ / mois';
+                return;
+            }
+
+            document.getElementById('plan-name').textContent = `Plan ${plan.name}`;
+            document.getElementById('plan-price').textContent = `${plan.price}€ / mois`;
+            
+            // Mettre à jour les montants selon la méthode de paiement
+            if (selectedPaymentMethod === 'paypal') {
+                const amount = `${plan.price}€`;
+                const paypalAmount = document.getElementById('paypal-amount');
+                if (paypalAmount) {
+                    paypalAmount.textContent = amount;
+                }
+                const paypalAmountStep = document.getElementById('paypal-amount-step');
+                if (paypalAmountStep) {
+                    paypalAmountStep.textContent = amount;
+                }
+            } else if (selectedPaymentMethod === 'ltc') {
+                calculateLTCAmount();
+            }
+        }
+
+        // Formatage automatique des champs
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Vérifier l'authentification d'abord
+            const isAuthenticated = await checkPaymentAuth();
+            if (!isAuthenticated) {
+                return;
+            }
+            
+            loadPlans();
+            
+            // Sélectionner PayPal par défaut
+            setTimeout(() => {
+                selectPaymentMethod('paypal');
+            }, 500);
+
+            // Pré-remplir l'email avec l'email de l'utilisateur
+            const userEmail = localStorage.getItem('user_email');
+            if (userEmail) {
+                document.getElementById('billing-email').value = userEmail;
+            }
+
+            // Formatage du numéro de carte
+            const cardNumberInput = document.getElementById('card-number');
+            cardNumberInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\s/g, '');
+                value = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = value;
+            });
+
+            // Formatage de la date d'expiration
+            const cardExpiryInput = document.getElementById('card-expiry');
+            cardExpiryInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+
+            // Formatage du CVV (chiffres uniquement)
+            const cardCvvInput = document.getElementById('card-cvv');
+            cardCvvInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        });
+
+        let selectedPaymentMethod = null;
+        const PAYPAL_EMAIL = 'u8625172031@gmail.com';
+        const LTC_ADDRESS = 'LTc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'; // Adresse LTC à remplacer par la vraie
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            document.getElementById(`${method}-method`).checked = true;
+            
+            // Afficher les instructions correspondantes
+            document.getElementById('paypal-instructions').style.display = method === 'paypal' ? 'block' : 'none';
+            document.getElementById('ltc-instructions').style.display = method === 'ltc' ? 'block' : 'none';
+            
+            // Mettre à jour les montants
+            if (method === 'paypal') {
+                const plan = paymentPlans[selectedPlanId];
+                if (plan) {
+                    const amount = `${plan.price}€`;
+                    document.getElementById('paypal-amount').textContent = amount;
+                    const paypalAmountStep = document.getElementById('paypal-amount-step');
+                    if (paypalAmountStep) {
+                        paypalAmountStep.textContent = amount;
+                    }
+                }
+            } else if (method === 'ltc') {
+                calculateLTCAmount();
+            }
+        }
+
+        async function calculateLTCAmount() {
+            const plan = paymentPlans[selectedPlanId];
+            if (!plan) return;
+            
+            try {
+                // Récupérer le prix LTC depuis une API (exemple avec CoinGecko)
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=eur');
+                const data = await response.json();
+                const ltcPrice = data.litecoin.eur;
+                const ltcAmount = (plan.price / ltcPrice).toFixed(6);
+                
+                document.getElementById('ltc-amount').textContent = ltcAmount;
+            } catch (error) {
+                // En cas d'erreur, utiliser un taux approximatif
+                const approximateLTCPrice = 70; // Prix approximatif en EUR
+                const ltcAmount = (plan.price / approximateLTCPrice).toFixed(6);
+                document.getElementById('ltc-amount').textContent = ltcAmount;
+            }
+        }
+
+        function copyPayPalEmail() {
+            navigator.clipboard.writeText(PAYPAL_EMAIL).then(() => {
+                showNotification('Email PayPal copié !', 'success');
+            });
+        }
+
+        function copyLTCAddress() {
+            navigator.clipboard.writeText(LTC_ADDRESS).then(() => {
+                showNotification('Adresse LTC copiée !', 'success');
+            });
+        }
+
+        async function submitPayPalPayment(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            const senderEmail = document.getElementById('paypal-sender-email').value.trim();
+            const transactionId = document.getElementById('paypal-transaction-id').value.trim();
+            
+            // Validation
+            if (!senderEmail) {
+                showNotification('Veuillez entrer votre email PayPal', 'error');
+                document.getElementById('paypal-sender-email').focus();
+                return;
+            }
+            
+            // Validation de l'email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(senderEmail)) {
+                showNotification('Format d\'email invalide', 'error');
+                document.getElementById('paypal-sender-email').focus();
+                return;
+            }
+            
+            // Confirmation avant soumission
+            const confirmed = confirm(`Confirmer le paiement PayPal de ${paymentPlans[selectedPlanId]?.price || 'N/A'}€ ?\n\nEmail: ${senderEmail}\n\nAssurez-vous d'avoir effectué le paiement avant de confirmer.`);
+            if (!confirmed) {
+                return;
+            }
+            
+            await processPayment('paypal', {
+                sender_email: senderEmail,
+                transaction_id: transactionId
+            });
+        }
+
+        async function submitLTCPayment(event) {
+            if (event) {
+                event.preventDefault();
+            }
+            
+            const transactionHash = document.getElementById('ltc-transaction-hash').value.trim();
+            
+            // Validation du hash si fourni
+            if (transactionHash && !/^[a-fA-F0-9]{64}$/.test(transactionHash)) {
+                showNotification('Format de hash de transaction invalide (doit contenir 64 caractères hexadécimaux)', 'error');
+                document.getElementById('ltc-transaction-hash').focus();
+                return;
+            }
+            
+            // Confirmation avant soumission
+            const ltcAmount = document.getElementById('ltc-amount').textContent;
+            const confirmed = confirm(`Confirmer le paiement LTC ?\n\nMontant: ${ltcAmount} LTC\n\nAssurez-vous d'avoir effectué la transaction avant de confirmer.`);
+            if (!confirmed) {
+                return;
+            }
+            
+            await processPayment('ltc', {
+                transaction_hash: transactionHash
+            });
+        }
+
+        async function processPayment(method, additionalData = {}) {
+            const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                showNotification('Vous devez être connecté pour effectuer un paiement', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            
+            // Désactiver le bouton pour éviter les doubles soumissions
+            const submitButtons = document.querySelectorAll('.btn-payment-submit');
+            submitButtons.forEach(btn => {
+                btn.disabled = true;
+                const originalHTML = btn.innerHTML;
+                btn.dataset.originalHTML = originalHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement en cours...';
+            });
+            
+            try {
+                // Ajouter un timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const response = await fetch(`${backendUrl}/api/payment/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        plan_id: selectedPlanId,
+                        payment_method: method,
+                        ...additionalData
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message || 'Paiement enregistré ! Votre abonnement sera activé après vérification.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html?tab=payment';
+                    }, 3000);
+                } else {
+                    showNotification(data.error || 'Erreur lors du traitement du paiement', 'error');
+                    // Réactiver les boutons en cas d'erreur
+                    submitButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.innerHTML = btn.dataset.originalHTML || btn.innerHTML;
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du paiement:', error);
+                if (error.name === 'AbortError') {
+                    showNotification('Timeout : Le serveur met trop de temps à répondre', 'error');
+                } else {
+                    showNotification('Erreur de connexion au serveur', 'error');
+                }
+                // Réactiver les boutons en cas d'erreur
+                submitButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.dataset.originalHTML || btn.innerHTML;
+                });
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = message;
+            notification.className = `notification-simple ${type}`;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,2 @@
+API_KEY = "e3f379405b1f6e8c2fbc27bccfced0866e9df83c"
+API_URL = "https://leakcheck.io/api/public"

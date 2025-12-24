@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data files (sensitive)
+data/users.json
+data/keys.json
+data/sessions.json
+data/verification_codes.json
+data/payments.json
+data/subscriptions.json
+data/attack_log.json
+data/blocked_ips.json
+data/databases.json
+
+# Credentials
+CREDENTIALS_ADMIN.txt
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Build files
+dist/
+build/
+*.egg-info/
+
+# Node modules (if any)
+node_modules/
+
+# Local server files
+.python-http-server/
+

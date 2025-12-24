@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Lookup2Bz</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-styles.css">
+    <script src="config.js"></script>
+</head>
+<body class="admin-body">
+    <!-- Discord Button -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <a href="https://discord.gg/4dCtyUwzNb" target="_blank" class="discord-btn-fixed" title="Rejoindre notre serveur Discord">
+            <img src="discord-logo.png" alt="Discord" class="discord-logo-img-fixed">
+            <span>Discord</span>
+        </a>
+    </div>
+    
+    <canvas id="particles-js"></canvas>
+    
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="logo.svg" alt="Lookup2Bz" class="auth-logo">
+                <h1>Connexion</h1>
+                <p>Accédez à votre compte Lookup2Bz</p>
+            </div>
+
+            <form onsubmit="loginUser(event)" class="auth-form">
+                <div class="auth-form-group">
+                    <label>
+                        <i class="fas fa-envelope"></i>
+                        Adresse email
+                    </label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" class="auth-input" required>
+                </div>
+
+                <div class="auth-form-group">
+                    <label>
+                        <i class="fas fa-lock"></i>
+                        Mot de passe
+                    </label>
+                    <input type="password" id="login-password" placeholder="Votre mot de passe" class="auth-input" required>
+                </div>
+
+                <button type="submit" class="auth-btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se connecter
+                </button>
+
+                <div id="login-error" class="auth-error"></div>
+            </form>
+
+            <div class="auth-footer">
+                <p>Pas encore de compte ? <a href="register.html" class="auth-link">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="particles.js"></script>
+    <script>
+        async function loginUser(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (!email || !password) {
+                errorDiv.textContent = 'Veuillez remplir tous les champs';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            errorDiv.style.display = 'none';
+            const btn = event.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion...';
+
+            try {
+                const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+                const response = await fetch(`${backendUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Stocker le token et le rôle
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_role', data.user.role);
+                    localStorage.setItem('user_email', data.user.email);
+                    
+                    // Rediriger vers le panel
+                    window.location.href = 'index.html';
+                } else {
+                    errorDiv.textContent = data.error || 'Identifiants invalides';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                if (error.message.includes('Failed to fetch')) {
+                    errorDiv.innerHTML = `
+                        <strong>⚠️ Impossible de se connecter au serveur</strong><br>
+                        Assurez-vous que le backend est démarré :<br>
+                        <code style="background: rgba(239,68,68,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">python backend.py</code>
+                    `;
+                } else {
+                    errorDiv.textContent = 'Erreur de connexion au serveur : ' + error.message;
+                }
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
+            }
+        }
+
+        // Vérifier si déjà connecté
+        if (localStorage.getItem('auth_token')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
+

@@ -4,7 +4,7 @@ services:
     name: lookup2bz-backend
     env: python
     buildCommand: pip install -r backend-requirements.txt
-    startCommand: gunicorn backend:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    startCommand: gunicorn backend:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --access-logfile - --error-logfile -
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -16,6 +16,8 @@ services:
         value: https://lookup2bz.onrender.com,https://www.lookup2bz.onrender.com
       - key: SMTP_ENABLED
         value: false
+      - key: FORCE_HTTPS
+        value: true
     healthCheckPath: /api/health
     plan: free
 

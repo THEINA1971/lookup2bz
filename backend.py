@@ -78,18 +78,109 @@ def set_security_headers(response):
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     return response
 
+# Déterminer le répertoire de base (répertoire du script)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Fonction pour obtenir le répertoire de données (avec fallback)
+def get_data_dir():
+    """Retourne le répertoire de données, en créant un fallback si nécessaire"""
+    data_dir = os.path.join(BASE_DIR, 'data')
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+        # Tester si on peut écrire dans ce répertoire
+        test_file = os.path.join(data_dir, '.test_write')
+        try:
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            return data_dir
+        except:
+            # Si on ne peut pas écrire, utiliser un répertoire temporaire
+            import tempfile
+            fallback_dir = os.path.join(tempfile.gettempdir(), 'lookup2bz_data')
+            os.makedirs(fallback_dir, exist_ok=True)
+            print(f"[WARNING] Utilisation du répertoire temporaire: {fallback_dir}")
+            return fallback_dir
+    except Exception as e:
+        print(f"[WARNING] Impossible de créer DATA_DIR: {e}")
+        # En dernier recours, utiliser un répertoire temporaire
+        import tempfile
+        fallback_dir = os.path.join(tempfile.gettempdir(), 'lookup2bz_data')
+        os.makedirs(fallback_dir, exist_ok=True)
+        print(f"[WARNING] Utilisation du répertoire temporaire: {fallback_dir}")
+        return fallback_dir
+
+# Initialiser DATA_DIR
+DATA_DIR = get_data_dir()
+
 # Fichier pour stocker les tentatives de connexion suspectes
-ATTACK_LOG_FILE = 'data/attack_log.json'
-BLOCKED_IPS_FILE = 'data/blocked_ips.json'
+# Utiliser des chemins absolus pour éviter les problèmes
+ATTACK_LOG_FILE = os.path.join(DATA_DIR, 'attack_log.json')
+BLOCKED_IPS_FILE = os.path.join(DATA_DIR, 'blocked_ips.json')
+
+# Vérification de sécurité : s'assurer que les chemins sont absolus
+if not os.path.isabs(ATTACK_LOG_FILE):
+    ATTACK_LOG_FILE = os.path.abspath(ATTACK_LOG_FILE)
+if not os.path.isabs(BLOCKED_IPS_FILE):
+    BLOCKED_IPS_FILE = os.path.abspath(BLOCKED_IPS_FILE)
 
 def init_security_files():
     """Initialise les fichiers de sécurité"""
-    if not os.path.exists(ATTACK_LOG_FILE):
-        with open(ATTACK_LOG_FILE, 'w') as f:
-            json.dump({}, f)
-    if not os.path.exists(BLOCKED_IPS_FILE):
-        with open(BLOCKED_IPS_FILE, 'w') as f:
-            json.dump({}, f)
+    # Afficher les chemins pour le débogage
+    print(f"[INIT] BASE_DIR: {BASE_DIR}")
+    print(f"[INIT] DATA_DIR: {DATA_DIR}")
+    print(f"[INIT] ATTACK_LOG_FILE: {ATTACK_LOG_FILE}")
+    print(f"[INIT] BLOCKED_IPS_FILE: {BLOCKED_IPS_FILE}")
+    
+    try:
+        # S'assurer que le répertoire existe (déjà créé par get_data_dir, mais on vérifie)
+        if not os.path.exists(DATA_DIR):
+            print(f"[INIT] Création du répertoire DATA_DIR: {DATA_DIR}")
+            os.makedirs(DATA_DIR, exist_ok=True)
+        
+        # Vérifier que le répertoire existe maintenant
+        if not os.path.exists(DATA_DIR):
+            raise OSError(f"Impossible de créer le répertoire: {DATA_DIR}")
+        
+        print(f"[INIT] DATA_DIR existe: {os.path.exists(DATA_DIR)}")
+        
+        # S'assurer que le répertoire parent du fichier existe
+        attack_log_dir = os.path.dirname(ATTACK_LOG_FILE)
+        if attack_log_dir and not os.path.exists(attack_log_dir):
+            print(f"[INIT] Création du répertoire parent: {attack_log_dir}")
+            os.makedirs(attack_log_dir, exist_ok=True)
+        
+        blocked_ips_dir = os.path.dirname(BLOCKED_IPS_FILE)
+        if blocked_ips_dir and not os.path.exists(blocked_ips_dir):
+            print(f"[INIT] Création du répertoire parent: {blocked_ips_dir}")
+            os.makedirs(blocked_ips_dir, exist_ok=True)
+        
+        # Créer les fichiers s'ils n'existent pas
+        if not os.path.exists(ATTACK_LOG_FILE):
+            print(f"[INIT] Création de {ATTACK_LOG_FILE}")
+            with open(ATTACK_LOG_FILE, 'w') as f:
+                json.dump({}, f)
+            print(f"[INIT] {ATTACK_LOG_FILE} créé avec succès")
+        else:
+            print(f"[INIT] {ATTACK_LOG_FILE} existe déjà")
+                
+        if not os.path.exists(BLOCKED_IPS_FILE):
+            print(f"[INIT] Création de {BLOCKED_IPS_FILE}")
+            with open(BLOCKED_IPS_FILE, 'w') as f:
+                json.dump({}, f)
+            print(f"[INIT] {BLOCKED_IPS_FILE} créé avec succès")
+        else:
+            print(f"[INIT] {BLOCKED_IPS_FILE} existe déjà")
+                
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de l'initialisation des fichiers de sécurité: {e}")
+        print(f"[ERROR] BASE_DIR: {BASE_DIR}")
+        print(f"[ERROR] DATA_DIR: {DATA_DIR}")
+        print(f"[ERROR] DATA_DIR existe: {os.path.exists(DATA_DIR)}")
+        print(f"[ERROR] Répertoire de travail: {os.getcwd()}")
+        import traceback
+        print(traceback.format_exc())
+        raise
 
 init_security_files()
 
@@ -234,46 +325,55 @@ def validate_request():
         return jsonify({'error': 'Requête invalide'}), 400
 
 # Fichiers de stockage (simulation de base de données)
-USERS_FILE = 'data/users.json'
-KEYS_FILE = 'data/keys.json'
-DATABASES_FILE = 'data/databases.json'
-SESSIONS_FILE = 'data/sessions.json'
-VERIFICATION_CODES_FILE = 'data/verification_codes.json'
-PAYMENTS_FILE = 'data/payments.json'
-SUBSCRIPTIONS_FILE = 'data/subscriptions.json'
-
-# Créer le dossier data s'il n'existe pas
-os.makedirs('data', exist_ok=True)
+USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+KEYS_FILE = os.path.join(DATA_DIR, 'keys.json')
+DATABASES_FILE = os.path.join(DATA_DIR, 'databases.json')
+SESSIONS_FILE = os.path.join(DATA_DIR, 'sessions.json')
+VERIFICATION_CODES_FILE = os.path.join(DATA_DIR, 'verification_codes.json')
+PAYMENTS_FILE = os.path.join(DATA_DIR, 'payments.json')
+SUBSCRIPTIONS_FILE = os.path.join(DATA_DIR, 'subscriptions.json')
 
 # Initialiser les fichiers s'ils n'existent pas
 def init_files():
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'w') as f:
-            json.dump({}, f)
-    
-    if not os.path.exists(KEYS_FILE):
-        with open(KEYS_FILE, 'w') as f:
-            json.dump({}, f)
-    
-    if not os.path.exists(DATABASES_FILE):
-        with open(DATABASES_FILE, 'w') as f:
-            json.dump([], f)
-    
-    if not os.path.exists(SESSIONS_FILE):
-        with open(SESSIONS_FILE, 'w') as f:
-            json.dump({}, f)
-    
-    if not os.path.exists(VERIFICATION_CODES_FILE):
-        with open(VERIFICATION_CODES_FILE, 'w') as f:
-            json.dump({}, f)
-    
-    if not os.path.exists(PAYMENTS_FILE):
-        with open(PAYMENTS_FILE, 'w') as f:
-            json.dump([], f)
-    
-    if not os.path.exists(SUBSCRIPTIONS_FILE):
-        with open(SUBSCRIPTIONS_FILE, 'w') as f:
-            json.dump({}, f)
+    try:
+        # S'assurer que le répertoire data existe (déjà créé par get_data_dir)
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR, exist_ok=True)
+        
+        if not os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'w') as f:
+                json.dump({}, f)
+        
+        if not os.path.exists(KEYS_FILE):
+            with open(KEYS_FILE, 'w') as f:
+                json.dump({}, f)
+        
+        if not os.path.exists(DATABASES_FILE):
+            with open(DATABASES_FILE, 'w') as f:
+                json.dump([], f)
+        
+        if not os.path.exists(SESSIONS_FILE):
+            with open(SESSIONS_FILE, 'w') as f:
+                json.dump({}, f)
+        
+        if not os.path.exists(VERIFICATION_CODES_FILE):
+            with open(VERIFICATION_CODES_FILE, 'w') as f:
+                json.dump({}, f)
+        
+        if not os.path.exists(PAYMENTS_FILE):
+            with open(PAYMENTS_FILE, 'w') as f:
+                json.dump([], f)
+        
+        if not os.path.exists(SUBSCRIPTIONS_FILE):
+            with open(SUBSCRIPTIONS_FILE, 'w') as f:
+                json.dump({}, f)
+    except Exception as e:
+        print(f"Erreur lors de l'initialisation des fichiers: {e}")
+        print(f"BASE_DIR: {BASE_DIR}")
+        print(f"DATA_DIR: {DATA_DIR}")
+        import traceback
+        print(traceback.format_exc())
+        raise
 
 init_files()
 

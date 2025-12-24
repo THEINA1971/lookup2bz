@@ -1583,6 +1583,7 @@ def cancel_subscription():
 
 # ==================== INITIALISATION ADMIN ====================
 
+# Appeler create_admin_user() au démarrage pour s'assurer que l'admin existe
 def create_admin_user():
     """Crée un utilisateur admin par défaut et une clé admin"""
     users = load_json(USERS_FILE)
@@ -1593,12 +1594,26 @@ def create_admin_user():
     admin_password = 'Admin123!'
     admin_key_code = 'ADMIN-MASTER-2024'
     
-    # Vérifier si l'admin existe déjà
+    # Vérifier si l'admin existe déjà et mettre à jour le mot de passe si nécessaire
     admin_exists = False
+    admin_user = None
+    admin_username_found = None
+    
     for username, user in users.items():
         if user.get('email', '').lower() == admin_email.lower() or user.get('role') == 'admin':
             admin_exists = True
+            admin_user = user
+            admin_username_found = username
             break
+    
+    if admin_exists and admin_user:
+        # Vérifier si le mot de passe correspond
+        if not check_password_hash(admin_user.get('password_hash', ''), admin_password):
+            # Réinitialiser le mot de passe
+            admin_user['password_hash'] = generate_password_hash(admin_password)
+            users[admin_username_found] = admin_user
+            save_json(USERS_FILE, users)
+            print(f"[OK] Mot de passe admin reinitialise pour {admin_email}")
     
     if not admin_exists:
         admin_id = secrets.token_hex(16)
@@ -1643,9 +1658,22 @@ def create_admin_user():
             'permissions': ['admin', 'generate_keys', 'delete_keys', 'view_all_keys']
         }
         save_json(KEYS_FILE, keys)
-        print(f"✅ Clé admin créée: {admin_key_code}")
+        print(f"[OK] Cle admin creee: {admin_key_code}")
     
     return admin_email, admin_password, admin_key_code
+
+# Créer l'utilisateur admin au démarrage (même avec gunicorn)
+try:
+    admin_email, admin_password, admin_key = create_admin_user()
+    print("\n[OK] Utilisateur admin initialise")
+    print(f"   Email: {admin_email}")
+    print(f"   Mot de passe: {admin_password}")
+    print(f"   Cle Admin: {admin_key}")
+except Exception as e:
+    print(f"[WARNING] Erreur lors de la creation de l'admin: {e}")
+    admin_email = 'admin@fullookup.com'
+    admin_password = 'Admin123!'
+    admin_key = 'ADMIN-MASTER-2024'
 
 if __name__ == '__main__':
     admin_email, admin_password, admin_key = create_admin_user()

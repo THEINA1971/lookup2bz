@@ -229,75 +229,137 @@ function getDurationMs(duration) {
     return durations[duration] || durations['1d'];
 }
 
-function createKey() {
+async function createKey() {
     const keyInput = document.getElementById('new-key-input');
     const durationSelect = document.getElementById('key-duration');
+    const keyNameInput = document.getElementById('key-name-input');
+    const keyIsAdminCheckbox = document.getElementById('key-is-admin');
     
     const keyCode = keyInput.value.trim();
     const duration = durationSelect.value;
+    const keyName = keyNameInput.value.trim();
+    const isAdmin = keyIsAdminCheckbox.checked;
     
     if (!keyCode || keyCode.length < 8) {
         showNotification('La clé doit contenir au moins 8 caractères', 'error');
         return;
     }
     
-    const keys = JSON.parse(localStorage.getItem('breachhub_keys') || '{}');
-    
-    if (keys[keyCode]) {
-        showNotification('Cette clé existe déjà', 'error');
+    // Récupérer le token d'authentification
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        showNotification('Vous devez être connecté pour créer une clé', 'error');
         return;
     }
     
-    const now = Date.now();
-    const durationMs = getDurationMs(duration);
-    const expiresAt = durationMs === Infinity ? Infinity : now + durationMs;
-    
-    const keyData = {
-        code: keyCode,
-        createdAt: now,
-        expiresAt: expiresAt,
-        duration: duration,
-        status: 'active'
-    };
-    
-    keys[keyCode] = keyData;
-    localStorage.setItem('breachhub_keys', JSON.stringify(keys));
-    
-    // Clear input
-    keyInput.value = '';
-    
-    // Reload keys
-    loadKeys();
-    
-    showNotification('Clé créée avec succès!');
+    // Appeler l'API backend
+    try {
+        const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/keys`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                code: keyCode,
+                duration: duration,
+                name: keyName,
+                is_admin: isAdmin
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            showNotification(data.error || 'Erreur lors de la création de la clé', 'error');
+            return;
+        }
+        
+        // Clear inputs
+        keyInput.value = '';
+        keyNameInput.value = '';
+        keyIsAdminCheckbox.checked = false;
+        
+        // Reload keys
+        await loadKeys();
+        
+        showNotification('Clé créée avec succès!', 'success');
+    } catch (error) {
+        console.error('Erreur lors de la création de la clé:', error);
+        showNotification('Erreur de connexion au serveur', 'error');
+    }
 }
 
 // Load and Display Keys
-function loadKeys() {
-    const keys = JSON.parse(localStorage.getItem('breachhub_keys') || '{}');
-    const keysArray = Object.entries(keys).sort((a, b) => b[1].createdAt - a[1].createdAt);
+async function loadKeys() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        console.error('Pas de token d\'authentification');
+        return;
+    }
     
-    // Update counts
-    const now = Date.now();
-    let allCount = keysArray.length;
-    let activeCount = 0;
-    let inactiveCount = 0;
-    
-    keysArray.forEach(([code, data]) => {
-        const isExpired = data.expiresAt !== Infinity && now > data.expiresAt;
-        if (isExpired) {
-            inactiveCount++;
-        } else {
-            activeCount++;
+    try {
+        const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/keys`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('Erreur lors du chargement des clés');
+            return;
         }
-    });
-    
-    document.getElementById('count-all').textContent = allCount;
-    document.getElementById('count-active').textContent = activeCount;
-    document.getElementById('count-inactive').textContent = inactiveCount;
-    
-    // Display keys based on filter
-    displayKeys(keysArray);
+        
+        const data = await response.json();
+        const keys = data.keys || [];
+        
+        // Convertir en format attendu par displayKeys
+        const keysArray = keys.map(key => [
+            key.code,
+            {
+                code: key.code,
+                name: key.name || '',
+                createdAt: new Date(key.created_at).getTime(),
+                expiresAt: key.expires_at === 'Infinity' ? Infinity : new Date(key.expires_at).getTime(),
+                duration: key.duration,
+                status: key.status,
+                is_admin: key.is_admin || false
+            }
+        ]).sort((a, b) => b[1].createdAt - a[1].createdAt);
+        
+        // Update counts
+        const now = Date.now();
+        let allCount = keysArray.length;
+        let activeCount = 0;
+        let inactiveCount = 0;
+        
+        keysArray.forEach(([code, data]) => {
+            const isExpired = data.expiresAt !== Infinity && now > data.expiresAt;
+            if (isExpired || data.status === 'expired') {
+                inactiveCount++;
+            } else {
+                activeCount++;
+            }
+        });
+        
+        if (document.getElementById('count-all')) {
+            document.getElementById('count-all').textContent = allCount;
+        }
+        if (document.getElementById('count-active')) {
+            document.getElementById('count-active').textContent = activeCount;
+        }
+        if (document.getElementById('count-inactive')) {
+            document.getElementById('count-inactive').textContent = inactiveCount;
+        }
+        
+        // Display keys based on filter
+        displayKeys(keysArray);
+    } catch (error) {
+        console.error('Erreur lors du chargement des clés:', error);
+    }
 }
 
 function displayKeys(keysArray) {
@@ -342,10 +404,16 @@ function displayKeys(keysArray) {
         const keyItem = document.createElement('div');
         keyItem.className = 'key-item-simple';
         
+        const isAdminKey = data.is_admin || false;
+        const keyName = data.name || '';
+        
         keyItem.innerHTML = `
             <div style="flex: 1;">
-                <div class="key-code-simple" style="${isMaster ? 'color: #ffd700;' : ''}">
-                    ${code} ${isMaster ? '<i class="fas fa-crown" style="margin-left: 8px; color: #ffd700;"></i>' : ''}
+                ${keyName ? `<div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">${keyName}</div>` : ''}
+                <div class="key-code-simple" style="${isMaster || isAdminKey ? 'color: #ffd700;' : ''}">
+                    ${code} 
+                    ${isMaster ? '<i class="fas fa-crown" style="margin-left: 8px; color: #ffd700;"></i>' : ''}
+                    ${isAdminKey ? '<span style="margin-left: 8px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">ADMIN</span>' : ''}
                 </div>
                 <div class="key-meta-simple">
                     <span>Créée: ${createdAt}</span>
@@ -401,18 +469,42 @@ function copyKey(code) {
     });
 }
 
-function deleteKey(code) {
-    if (code === MASTER_KEY) {
+async function deleteKey(code) {
+    if (code === 'ADMIN-MASTER-2024' || code === 'BH-MASTER-2024') {
         showNotification('Impossible de supprimer la clé master!', 'error');
         return;
     }
     
     if (confirm(`Êtes-vous sûr de vouloir supprimer la clé ${code}?`)) {
-        const keys = JSON.parse(localStorage.getItem('breachhub_keys') || '{}');
-        delete keys[code];
-        localStorage.setItem('breachhub_keys', JSON.stringify(keys));
-        loadKeys();
-        showNotification('Clé supprimée');
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showNotification('Vous devez être connecté pour supprimer une clé', 'error');
+            return;
+        }
+        
+        try {
+            const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+            const response = await fetch(`${backendUrl}/api/keys/${encodeURIComponent(code)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                showNotification(data.error || 'Erreur lors de la suppression de la clé', 'error');
+                return;
+            }
+            
+            // Reload keys
+            await loadKeys();
+            showNotification('Clé supprimée avec succès', 'success');
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la clé:', error);
+            showNotification('Erreur de connexion au serveur', 'error');
+        }
     }
 }
 

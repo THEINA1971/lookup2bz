@@ -1,0 +1,32 @@
+========================================
+🔐 CLÉ ADMIN PAR DÉFAUT
+========================================
+
+Lors du premier démarrage du backend, une clé admin est créée automatiquement.
+
+📧 Email Admin: admin@fullookup.com
+🔑 Mot de passe: Admin123!
+🔐 Clé Admin: ADMIN-MASTER-2024
+
+========================================
+⚠️ IMPORTANT
+========================================
+
+1. CHANGEZ LE MOT DE PASSE après la première connexion !
+2. Cette clé admin peut être utilisée pour :
+   - Générer d'autres clés
+   - Créer des clés admin
+   - Gérer tous les utilisateurs
+   - Voir toutes les clés
+
+========================================
+📝 UTILISATION
+========================================
+
+1. Connectez-vous avec l'email et le mot de passe admin
+2. Utilisez la clé ADMIN-MASTER-2024 lors de l'inscription d'autres utilisateurs
+3. Dans le panel, vous pouvez créer de nouvelles clés avec le bouton "Créer"
+4. Cochez "Clé Admin" pour créer une clé admin qui peut générer d'autres clés
+
+========================================
+

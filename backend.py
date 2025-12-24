@@ -3,7 +3,7 @@
 Backend Flask pour le Panel OSINT - Gestion complète
 """
 
-from flask import Flask, request, jsonify, session, g
+from flask import Flask, request, jsonify, session, g, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -832,9 +832,27 @@ def change_password():
 @app.route('/api/keys', methods=['GET'])
 @token_required
 def get_keys():
-    """Récupère toutes les clés de l'utilisateur"""
+    """Récupère toutes les clés de l'utilisateur (ou toutes si admin)"""
+    # Vérifier si l'utilisateur est admin
+    users = load_json(USERS_FILE)
+    current_user = None
+    for username, user in users.items():
+        if user['id'] == request.current_user_id:
+            current_user = user
+            break
+    
+    if not current_user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+    
+    is_admin_user = current_user.get('role') == 'admin'
+    
     keys = load_json(KEYS_FILE)
-    user_keys = {k: v for k, v in keys.items() if v.get('user_id') == request.current_user_id}
+    
+    # Si admin, voir toutes les clés, sinon seulement les siennes
+    if is_admin_user:
+        user_keys = keys
+    else:
+        user_keys = {k: v for k, v in keys.items() if v.get('user_id') == request.current_user_id}
     
     # Convertir en liste et ajouter le statut
     now = datetime.now(timezone.utc)
@@ -845,10 +863,12 @@ def get_keys():
         
         result.append({
             'code': code,
+            'name': key_data.get('name', ''),
             'created_at': key_data.get('created_at', ''),
             'expires_at': key_data.get('expires_at', ''),
             'duration': key_data.get('duration', ''),
-            'status': 'expired' if is_expired else 'active'
+            'status': 'expired' if is_expired else 'active',
+            'is_admin': key_data.get('is_admin', False)
         })
     
     return jsonify({
@@ -860,10 +880,25 @@ def get_keys():
 @token_required
 def create_key():
     """Crée une nouvelle clé d'accès"""
+    # Vérifier si l'utilisateur est admin
+    users = load_json(USERS_FILE)
+    current_user = None
+    for username, user in users.items():
+        if user['id'] == request.current_user_id:
+            current_user = user
+            break
+    
+    if not current_user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+    
+    is_admin_user = current_user.get('role') == 'admin'
+    
     data = request.get_json()
     
     key_code = data.get('code', '').strip()
     duration = data.get('duration', '1d')
+    is_admin_key = data.get('is_admin', False) if is_admin_user else False  # Seuls les admins peuvent créer des clés admin
+    key_name = data.get('name', '').strip() or f'Clé {key_code[:8]}...'
     
     if not key_code or len(key_code) < 8:
         return jsonify({'error': 'Code de clé requis (minimum 8 caractères)'}), 400
@@ -885,14 +920,22 @@ def create_key():
     now = datetime.now(timezone.utc)
     expires_at = 'Infinity' if duration == 'lifetime' else (now + duration_map.get(duration, timedelta(days=1))).isoformat()
     
-    keys[key_code] = {
+    key_data = {
         'code': key_code,
-        'user_id': request.current_user_id,
+        'user_id': request.current_user_id if not is_admin_key else None,  # Les clés admin ne sont pas liées à un utilisateur
         'created_at': now.isoformat(),
         'expires_at': expires_at,
         'duration': duration,
-        'status': 'active'
+        'status': 'active',
+        'name': key_name
     }
+    
+    # Ajouter les propriétés admin si c'est une clé admin
+    if is_admin_key:
+        key_data['is_admin'] = True
+        key_data['permissions'] = ['admin', 'generate_keys', 'delete_keys', 'view_all_keys']
+    
+    keys[key_code] = key_data
     
     save_json(KEYS_FILE, keys)
     
@@ -901,10 +944,12 @@ def create_key():
         'message': 'Clé créée avec succès',
         'key': {
             'code': key_code,
+            'name': key_name,
             'created_at': now.isoformat(),
             'expires_at': expires_at,
             'duration': duration,
-            'status': 'active'
+            'status': 'active',
+            'is_admin': is_admin_key
         }
     }), 201
 
@@ -1120,8 +1165,16 @@ def get_all_keys():
 def index():
     """Route racine - Servir le frontend (index.html)"""
     try:
-        return app.send_static_file('index.html')
-    except:
+        # Essayer de servir index.html depuis le répertoire de base
+        index_path = os.path.join(BASE_DIR, 'index.html')
+        if os.path.exists(index_path):
+            with open(index_path, 'r', encoding='utf-8') as f:
+                return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+        else:
+            # Essayer avec send_from_directory
+            return send_from_directory(BASE_DIR, 'index.html')
+    except Exception as e:
+        print(f"[ERROR] Impossible de servir index.html: {e}")
         # Si index.html n'existe pas, retourner les infos API
         return jsonify({
             'service': 'FULLLOOKUP OSINT Platform Backend',
@@ -1132,7 +1185,8 @@ def index():
                 'auth': '/api/auth/*',
                 'keys': '/api/keys/*',
                 'breachhub': '/api/breachhub/*'
-            }
+            },
+            'error': f'index.html not found: {str(e)}'
         }), 200
 
 # Servir les autres pages HTML et fichiers statiques
@@ -1153,15 +1207,45 @@ def serve_static(filename):
         return jsonify({'error': 'Not found'}), 404
     
     try:
-        return app.send_static_file(filename)
-    except:
+        # Essayer de servir le fichier depuis le répertoire de base
+        file_path = os.path.join(BASE_DIR, filename)
+        if os.path.exists(file_path):
+            # Déterminer le Content-Type selon l'extension
+            content_type = 'text/html'
+            if filename.endswith('.css'):
+                content_type = 'text/css'
+            elif filename.endswith('.js'):
+                content_type = 'application/javascript'
+            elif filename.endswith('.json'):
+                content_type = 'application/json'
+            elif filename.endswith('.svg'):
+                content_type = 'image/svg+xml'
+            elif filename.endswith('.png'):
+                content_type = 'image/png'
+            elif filename.endswith('.jpg') or filename.endswith('.jpeg'):
+                content_type = 'image/jpeg'
+            
+            with open(file_path, 'rb') as f:
+                content = f.read()
+                if filename.endswith('.html') or filename.endswith('.css') or filename.endswith('.js'):
+                    content = content.decode('utf-8')
+                    return content, 200, {'Content-Type': f'{content_type}; charset=utf-8'}
+                else:
+                    return content, 200, {'Content-Type': content_type}
+        else:
+            # Essayer avec send_from_directory
+            return send_from_directory(BASE_DIR, filename)
+    except Exception as e:
         # Si le fichier n'existe pas et que c'est une route HTML, servir index.html (pour le routing SPA)
         if not '.' in filename or filename.endswith('.html') or '/' in filename:
             try:
-                return app.send_static_file('index.html')
+                index_path = os.path.join(BASE_DIR, 'index.html')
+                if os.path.exists(index_path):
+                    with open(index_path, 'r', encoding='utf-8') as f:
+                        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
             except:
                 pass
-        return jsonify({'error': 'File not found'}), 404
+        return jsonify({'error': 'File not found', 'filename': filename}), 404
 
 # ==================== ROUTE HEALTH CHECK ====================
 
@@ -1555,6 +1639,7 @@ def create_admin_user():
             'duration': 'lifetime',
             'status': 'active',
             'is_admin': True,
+            'name': 'Clé Admin Master',
             'permissions': ['admin', 'generate_keys', 'delete_keys', 'view_all_keys']
         }
         save_json(KEYS_FILE, keys)

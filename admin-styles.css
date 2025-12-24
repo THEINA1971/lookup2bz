@@ -369,123 +369,65 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0;
-    padding: 8px;
-    background: transparent;
-    border: 2px solid rgba(239, 68, 68, 0.6);
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid rgba(239, 68, 68, 0.5);
     border-radius: 12px;
-    color: #ef4444;
-    font-size: 24px;
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     position: relative;
-    overflow: visible;
-    box-shadow: 
-        0 4px 15px rgba(239, 68, 68, 0.3),
-        0 0 25px rgba(239, 68, 68, 0.2);
-    width: 56px;
-    height: 56px;
-    will-change: transform, box-shadow;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    overflow: hidden;
+    width: 50px;
+    height: 50px;
 }
 
 .discord-btn-header::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.6s ease;
-}
-
-.discord-btn-header::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s ease, height 0.6s ease;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(239, 68, 68, 0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .discord-btn-header:hover::before {
-    left: 100%;
-}
-
-.discord-btn-header:hover::after {
-    width: 300px;
-    height: 300px;
+    opacity: 1;
 }
 
 .discord-btn-header:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.9);
-    box-shadow: 
-        0 8px 30px rgba(239, 68, 68, 0.6),
-        0 0 50px rgba(239, 68, 68, 0.4),
-        inset 0 0 20px rgba(239, 68, 68, 0.1);
-    transform: translateY(-4px) scale(1.08) translateZ(0);
-    color: #dc2626;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    transform: translateY(-2px);
 }
 
 .discord-btn-header:active {
-    transform: translateY(-2px) scale(1.05) translateZ(0);
-    box-shadow: 
-        0 4px 20px rgba(239, 68, 68, 0.5),
-        0 0 35px rgba(239, 68, 68, 0.3),
-        inset 0 0 15px rgba(239, 68, 68, 0.15);
+    transform: translateY(0);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
-/* Logo Discord 3D */
+/* Logo Discord simple */
 .discord-logo-3d {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     object-fit: contain;
-    filter: 
-        drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))
-        drop-shadow(0 4px 12px rgba(239, 68, 68, 0.6))
-        drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
+    transition: all 0.3s ease;
     z-index: 1;
     position: relative;
-    transform-style: preserve-3d;
-    will-change: transform, filter;
-    transform: translateZ(0) perspective(1000px) rotateX(0deg) rotateY(0deg);
-    -webkit-transform: translateZ(0) perspective(1000px) rotateX(0deg) rotateY(0deg);
-    animation: discordFloat 3s ease-in-out infinite;
-}
-
-@keyframes discordFloat {
-    0%, 100% {
-        transform: translateZ(0) perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px);
-    }
-    50% {
-        transform: translateZ(0) perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-5px);
-    }
 }
 
 .discord-btn-header:hover .discord-logo-3d {
-    filter: 
-        drop-shadow(0 0 15px rgba(239, 68, 68, 1))
-        drop-shadow(0 6px 20px rgba(239, 68, 68, 0.8))
-        drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6));
-    transform: translateZ(20px) perspective(1000px) rotateX(-10deg) rotateY(10deg) scale(1.2);
-    -webkit-transform: translateZ(20px) perspective(1000px) rotateX(-10deg) rotateY(10deg) scale(1.2);
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.9));
+    transform: scale(1.1);
 }
 
 .discord-btn-header:active .discord-logo-3d {
-    transform: translateZ(10px) perspective(1000px) rotateX(5deg) rotateY(-5deg) scale(1.1);
-    -webkit-transform: translateZ(10px) perspective(1000px) rotateX(5deg) rotateY(-5deg) scale(1.1);
-    filter: 
-        drop-shadow(0 0 20px rgba(239, 68, 68, 1))
-        drop-shadow(0 8px 25px rgba(239, 68, 68, 0.9))
-        drop-shadow(0 15px 35px rgba(0, 0, 0, 0.7));
+    transform: scale(0.95);
 }
 
 .discord-btn-header:active {
@@ -2470,9 +2412,9 @@ small {
     padding: 20px;
     position: relative;
     z-index: 1;
-    /* Centrer plus vers le milieu vertical */
-    padding-top: 10vh;
-    padding-bottom: 10vh;
+    /* Centrer au milieu vertical */
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .auth-card {

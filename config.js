@@ -14,13 +14,19 @@ const CONFIG = {
         
         // En production sur Render
         if (this.isProduction) {
-            // Remplacez par votre URL backend Render (ex: https://lookup2bz-backend.onrender.com)
-            // Vous pouvez aussi utiliser une variable d'environnement
+            // URL du backend Render
             const renderBackendUrl = 'https://lookup2bz-backend.onrender.com';
             
-            // Si on est sur Render, utiliser l'URL du backend
+            // Si on est sur le frontend Render (lookup2bz-frontend.onrender.com ou lookup2bz.onrender.com)
             if (window.location.hostname.includes('onrender.com')) {
-                return renderBackendUrl;
+                // Si c'est le frontend, utiliser l'URL du backend
+                if (window.location.hostname.includes('frontend') || 
+                    window.location.hostname === 'lookup2bz.onrender.com' ||
+                    window.location.hostname === 'www.lookup2bz.onrender.com') {
+                    return renderBackendUrl;
+                }
+                // Si c'est déjà le backend, retourner l'URL actuelle
+                return window.location.origin;
             }
             
             // Sinon, utiliser l'URL relative (même domaine)

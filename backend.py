@@ -23,7 +23,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', secrets.token_hex(32))
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
@@ -1118,18 +1118,50 @@ def get_all_keys():
 
 @app.route('/', methods=['GET'])
 def index():
-    """Route racine - Informations sur l'API"""
-    return jsonify({
-        'service': 'FULLLOOKUP OSINT Platform Backend',
-        'version': '1.0.0',
-        'status': 'running',
-        'endpoints': {
-            'health': '/api/health',
-            'auth': '/api/auth/*',
-            'keys': '/api/keys/*',
-            'breachhub': '/api/breachhub/*'
-        }
-    }), 200
+    """Route racine - Servir le frontend (index.html)"""
+    try:
+        return app.send_static_file('index.html')
+    except:
+        # Si index.html n'existe pas, retourner les infos API
+        return jsonify({
+            'service': 'FULLLOOKUP OSINT Platform Backend',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'health': '/api/health',
+                'auth': '/api/auth/*',
+                'keys': '/api/keys/*',
+                'breachhub': '/api/breachhub/*'
+            }
+        }), 200
+
+# Servir les autres pages HTML et fichiers statiques
+# Cette route doit être définie APRÈS toutes les routes API
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Servir les fichiers statiques (HTML, CSS, JS, etc.)"""
+    # Ne pas servir les fichiers de l'API (déjà gérés par les routes API)
+    if filename.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    # Ne pas servir les fichiers de données
+    if filename.startswith('data/'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    # Ne pas servir les fichiers Python
+    if filename.endswith('.py'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    try:
+        return app.send_static_file(filename)
+    except:
+        # Si le fichier n'existe pas et que c'est une route HTML, servir index.html (pour le routing SPA)
+        if not '.' in filename or filename.endswith('.html') or '/' in filename:
+            try:
+                return app.send_static_file('index.html')
+            except:
+                pass
+        return jsonify({'error': 'File not found'}), 404
 
 # ==================== ROUTE HEALTH CHECK ====================
 

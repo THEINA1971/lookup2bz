@@ -379,15 +379,60 @@ init_files()
 
 # Fonctions utilitaires
 def load_json(filepath):
+    """Charge les données depuis un fichier JSON"""
     try:
+        if not os.path.exists(filepath):
+            # Si le fichier n'existe pas, retourner une structure vide
+            default = {} if 'keys' in filepath or 'users' in filepath or 'sessions' in filepath else []
+            print(f"[INFO] Fichier {filepath} n'existe pas, utilisation de la valeur par défaut")
+            return default
+        
         with open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return {} if 'keys' in filepath or 'users' in filepath else []
+            data = json.load(f)
+            return data
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Erreur de décodage JSON dans {filepath}: {e}")
+        # Retourner une structure vide en cas d'erreur
+        return {} if 'keys' in filepath or 'users' in filepath or 'sessions' in filepath else []
+    except Exception as e:
+        print(f"[ERROR] Erreur lors du chargement de {filepath}: {e}")
+        return {} if 'keys' in filepath or 'users' in filepath or 'sessions' in filepath else []
 
 def save_json(filepath, data):
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    """Sauvegarde les données dans un fichier JSON"""
+    try:
+        # S'assurer que le répertoire existe
+        dir_path = os.path.dirname(filepath)
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+    except Exception as e:
+        print(f"[WARNING] Erreur lors de la création du répertoire pour {filepath}: {e}")
+    
+    try:
+        # Sauvegarder dans un fichier temporaire d'abord, puis renommer (atomic write)
+        temp_filepath = filepath + '.tmp'
+        with open(temp_filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # Renommer le fichier temporaire (opération atomique)
+        if os.path.exists(filepath):
+            os.replace(temp_filepath, filepath)
+        else:
+            os.rename(temp_filepath, filepath)
+        
+        print(f"[OK] Données sauvegardées dans {filepath}")
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de la sauvegarde dans {filepath}: {e}")
+        import traceback
+        print(traceback.format_exc())
+        # Essayer de sauvegarder directement si la méthode temporaire échoue
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print(f"[OK] Sauvegarde directe réussie pour {filepath}")
+        except Exception as e2:
+            print(f"[ERROR] Échec de la sauvegarde directe: {e2}")
+            raise
 
 def generate_token(user_id):
     """Génère un token JWT"""
@@ -637,16 +682,38 @@ def register():
     
     key_data = keys[key_code]
     
-    # Vérifier l'expiration de la clé
+    # Vérifier l'expiration de la clé et mettre à jour le statut si nécessaire
+    now = datetime.now(timezone.utc)
     if key_data.get('expires_at') != 'Infinity':
         expires_at = datetime.fromisoformat(key_data['expires_at'])
-        if expires_at < datetime.now(timezone.utc):
+        if expires_at < now:
+            # Mettre à jour le statut dans la base de données
+            key_data['status'] = 'expired'
+            key_data['expired_at'] = now.isoformat()
+            keys[key_code] = key_data
+            try:
+                save_json(KEYS_FILE, keys)
+            except Exception as e:
+                print(f"[WARNING] Erreur lors de la mise à jour du statut expiré: {e}")
             return jsonify({'error': 'Clé expirée'}), 400
     
-    # Vérifier si la clé est déjà utilisée (vérifier used_at au lieu de user_id)
-    # user_id = créateur de la clé, used_at = date d'utilisation pour inscription
+    # Vérifier le statut de la clé
+    if key_data.get('status') == 'used':
+        return jsonify({'error': 'Cette clé a déjà été utilisée'}), 400
+    
+    if key_data.get('status') == 'expired':
+        return jsonify({'error': 'Cette clé est expirée'}), 400
+    
+    if key_data.get('status') != 'active':
+        return jsonify({'error': 'Cette clé n\'est pas active'}), 400
+    
+    # Vérifier si la clé est déjà utilisée (vérifier used_at et used_by)
+    # user_id/created_by = créateur de la clé, used_by = utilisateur qui l'a utilisée
     if key_data.get('used_at') and not key_data.get('is_admin'):
-        return jsonify({'error': 'Cette clé est déjà utilisée'}), 400
+        return jsonify({'error': 'Cette clé a déjà été utilisée pour une inscription'}), 400
+    
+    if key_data.get('used_by') and not key_data.get('is_admin'):
+        return jsonify({'error': 'Cette clé a déjà été utilisée par un autre utilisateur'}), 400
     
     # Si c'est une clé admin, donner le rôle admin à l'utilisateur
     user_role = 'admin' if key_data.get('is_admin') else 'user'
@@ -657,7 +724,7 @@ def register():
         if user.get('email', '').lower() == email:
             return jsonify({'error': 'Cet email est déjà utilisé'}), 400
     
-    # Créer l'utilisateur (username = email)
+    # Créer l'utilisateur
     user_id = secrets.token_hex(16)
     username = email.split('@')[0] + '_' + secrets.token_hex(4)  # Générer un username unique
     
@@ -665,24 +732,55 @@ def register():
     while username in users:
         username = email.split('@')[0] + '_' + secrets.token_hex(4)
     
+    now = datetime.now(timezone.utc)
+    
+    # Créer le compte utilisateur avec toutes les informations
     users[username] = {
         'id': user_id,
         'username': username,
         'email': email,
         'password_hash': generate_password_hash(password),
-        'created_at': datetime.now(timezone.utc).isoformat(),
+        'created_at': now.isoformat(),
         'role': user_role,
         'active': True,
         'email_verified': False,
-        'key_code': key_code
+        'key_code': key_code,  # Clé utilisée pour l'inscription
+        'key_used_at': now.isoformat(),  # Date d'utilisation de la clé
+        'subscription_status': 'none',  # Statut d'abonnement
+        'last_login': None,  # Dernière connexion
+        'ip_address': ip  # IP d'inscription
     }
     
-    # Associer la clé à l'utilisateur (sauf si c'est une clé admin réutilisable)
+    # Marquer la clé comme utilisée (sauf si c'est une clé admin réutilisable)
     if not key_data.get('is_admin'):
         key_data['used_by'] = user_id  # Utilisateur qui a utilisé la clé pour s'inscrire
-        key_data['used_at'] = datetime.now(timezone.utc).isoformat()
-        # Garder user_id pour le créateur de la clé
-    save_json(KEYS_FILE, keys)
+        key_data['used_at'] = now.isoformat()  # Date d'utilisation
+        key_data['status'] = 'used'  # Marquer comme utilisée
+        key_data['used_by_email'] = email  # Email de l'utilisateur qui a utilisé la clé
+    else:
+        # Pour les clés admin, on peut les réutiliser mais on enregistre l'utilisation
+        if 'usage_history' not in key_data:
+            key_data['usage_history'] = []
+        key_data['usage_history'].append({
+            'user_id': user_id,
+            'email': email,
+            'used_at': now.isoformat()
+        })
+    
+    # Sauvegarder les clés et les utilisateurs
+    try:
+        save_json(KEYS_FILE, keys)
+        print(f"[OK] Clé '{key_code}' marquée comme utilisée par {email}")
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de la sauvegarde de la clé: {e}")
+        return jsonify({'error': 'Erreur lors de la mise à jour de la clé'}), 500
+    
+    try:
+        save_json(USERS_FILE, users)
+        print(f"[OK] Utilisateur '{username}' créé et sauvegardé")
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de la sauvegarde de l'utilisateur: {e}")
+        return jsonify({'error': 'Erreur lors de la création du compte'}), 500
     
     save_json(USERS_FILE, users)
     
@@ -761,7 +859,15 @@ def login():
         log_attack(ip, 'login_blocked_account', f'Tentative de connexion à un compte désactivé: {email}')
         return jsonify({'error': 'Compte désactivé'}), 403
     
-    # Connexion réussie - réinitialiser le compteur d'échecs
+    # Connexion réussie - mettre à jour la dernière connexion
+    user['last_login'] = datetime.now(timezone.utc).isoformat()
+    users[username] = user
+    try:
+        save_json(USERS_FILE, users)
+    except Exception as e:
+        print(f"[WARNING] Erreur lors de la mise à jour de last_login: {e}")
+    
+    # Réinitialiser le compteur d'échecs
     token = generate_token(user['id'])
     
     return jsonify({
@@ -831,10 +937,38 @@ def change_password():
 
 # ==================== ROUTES GESTION DES CLÉS ====================
 
+def update_key_statuses():
+    """Met à jour le statut des clés expirées dans la base de données"""
+    keys = load_json(KEYS_FILE)
+    now = datetime.now(timezone.utc)
+    updated = False
+    
+    for code, key_data in keys.items():
+        # Ignorer les clés déjà utilisées ou lifetime
+        if key_data.get('status') == 'used' or key_data.get('expires_at') == 'Infinity':
+            continue
+        
+        # Vérifier l'expiration
+        expires_at = datetime.fromisoformat(key_data['expires_at']) if key_data.get('expires_at') else None
+        if expires_at and expires_at < now and key_data.get('status') != 'expired':
+            key_data['status'] = 'expired'
+            key_data['expired_at'] = now.isoformat()
+            updated = True
+    
+    if updated:
+        try:
+            save_json(KEYS_FILE, keys)
+            print("[OK] Statuts des clés expirées mis à jour")
+        except Exception as e:
+            print(f"[ERROR] Erreur lors de la mise à jour des statuts: {e}")
+
 @app.route('/api/keys', methods=['GET'])
 @token_required
 def get_keys():
     """Récupère toutes les clés de l'utilisateur (ou toutes si admin)"""
+    # Mettre à jour les statuts des clés expirées
+    update_key_statuses()
+    
     # Vérifier si l'utilisateur est admin
     users = load_json(USERS_FILE)
     current_user = None
@@ -854,7 +988,7 @@ def get_keys():
     if is_admin_user:
         user_keys = keys
     else:
-        user_keys = {k: v for k, v in keys.items() if v.get('user_id') == request.current_user_id}
+        user_keys = {k: v for k, v in keys.items() if v.get('created_by') == request.current_user_id or v.get('user_id') == request.current_user_id}
     
     # Convertir en liste et ajouter le statut
     now = datetime.now(timezone.utc)
@@ -863,14 +997,21 @@ def get_keys():
         expires_at = datetime.fromisoformat(key_data['expires_at']) if key_data.get('expires_at') != 'Infinity' else None
         is_expired = expires_at and expires_at < now if expires_at else False
         
+        # Utiliser le statut stocké ou calculer
+        status = key_data.get('status', 'active')
+        if is_expired and status == 'active':
+            status = 'expired'
+        
         result.append({
             'code': code,
             'name': key_data.get('name', ''),
             'created_at': key_data.get('created_at', ''),
             'expires_at': key_data.get('expires_at', ''),
             'duration': key_data.get('duration', ''),
-            'status': 'expired' if is_expired else 'active',
-            'is_admin': key_data.get('is_admin', False)
+            'status': status,  # Utiliser le statut stocké
+            'is_admin': key_data.get('is_admin', False),
+            'used_at': key_data.get('used_at'),
+            'used_by_email': key_data.get('used_by_email')
         })
     
     return jsonify({
@@ -922,25 +1063,43 @@ def create_key():
     now = datetime.now(timezone.utc)
     expires_at = 'Infinity' if duration == 'lifetime' else (now + duration_map.get(duration, timedelta(days=1))).isoformat()
     
+    # Récupérer les infos du créateur
+    creator_email = current_user.get('email', '') if current_user else ''
+    creator_username = current_user.get('username', '') if current_user else ''
+    
     key_data = {
         'code': key_code,
-        'created_by': request.current_user_id if not is_admin_key else None,  # Créateur de la clé
+        'name': key_name,
+        'created_by': request.current_user_id if not is_admin_key else None,  # ID du créateur
+        'created_by_email': creator_email,  # Email du créateur
+        'created_by_username': creator_username,  # Username du créateur
         'user_id': request.current_user_id if not is_admin_key else None,  # Gardé pour compatibilité
         'created_at': now.isoformat(),
         'expires_at': expires_at,
         'duration': duration,
-        'status': 'active',
-        'name': key_name
+        'status': 'active',  # active, used, expired, cancelled
+        'is_admin': is_admin_key,
+        'used_at': None,  # Date d'utilisation (sera rempli lors de l'inscription)
+        'used_by': None,  # ID de l'utilisateur qui a utilisé la clé
+        'used_by_email': None,  # Email de l'utilisateur qui a utilisé la clé
+        'usage_count': 0  # Nombre de fois que la clé a été utilisée (pour les clés admin)
     }
     
     # Ajouter les propriétés admin si c'est une clé admin
     if is_admin_key:
         key_data['is_admin'] = True
         key_data['permissions'] = ['admin', 'generate_keys', 'delete_keys', 'view_all_keys']
+        key_data['usage_history'] = []  # Historique des utilisations (clés admin réutilisables)
     
     keys[key_code] = key_data
     
-    save_json(KEYS_FILE, keys)
+    # Sauvegarder dans la base de données
+    try:
+        save_json(KEYS_FILE, keys)
+        print(f"[OK] Clé '{key_code}' sauvegardée dans {KEYS_FILE}")
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de la sauvegarde de la clé: {e}")
+        return jsonify({'error': 'Erreur lors de la sauvegarde de la clé'}), 500
     
     return jsonify({
         'success': True,

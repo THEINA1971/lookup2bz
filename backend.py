@@ -90,6 +90,24 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Fonction pour obtenir le répertoire de données (avec fallback)
 def get_data_dir():
     """Retourne le répertoire de données, en créant un fallback si nécessaire"""
+    # 1. Vérifier si un répertoire persistant est configuré (Render Disk)
+    persistent_dir = os.getenv("PERSISTENT_DIR")
+    if persistent_dir:
+        try:
+            os.makedirs(persistent_dir, exist_ok=True)
+            # Tester si on peut écrire dans ce répertoire
+            test_file = os.path.join(persistent_dir, ".test_write")
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+            print(f"[INFO] Utilisation du stockage persistant: {persistent_dir}")
+            return persistent_dir
+        except Exception as e:
+            print(
+                f"[WARNING] Impossible d'utiliser PERSISTENT_DIR ({persistent_dir}): {e}"
+            )
+
+    # 2. Sinon, utiliser le répertoire local 'data'
     data_dir = os.path.join(BASE_DIR, "data")
     try:
         os.makedirs(data_dir, exist_ok=True)
@@ -108,7 +126,7 @@ def get_data_dir():
             os.makedirs(fallback_dir, exist_ok=True)
             print(f"[WARNING] Utilisation du répertoire temporaire: {fallback_dir}")
             return fallback_dir
-    except Exception as e:
+    except OSError as e:
         print(f"[WARNING] Impossible de créer DATA_DIR: {e}")
         # En dernier recours, utiliser un répertoire temporaire
         import tempfile
@@ -381,33 +399,23 @@ def init_files():
         if not os.path.exists(DATA_DIR):
             os.makedirs(DATA_DIR, exist_ok=True)
 
-        if not os.path.exists(USERS_FILE):
-            with open(USERS_FILE, "w") as f:
-                json.dump({}, f)
+        # Liste des fichiers à initialiser avec leur contenu par défaut
+        files_to_init = [
+            (USERS_FILE, {}),
+            (KEYS_FILE, {}),
+            (DATABASES_FILE, []),
+            (SESSIONS_FILE, {}),
+            (VERIFICATION_CODES_FILE, {}),
+            (PAYMENTS_FILE, []),
+            (SUBSCRIPTIONS_FILE, {}),
+        ]
 
-        if not os.path.exists(KEYS_FILE):
-            with open(KEYS_FILE, "w") as f:
-                json.dump({}, f)
+        for filepath, default_content in files_to_init:
+            if not os.path.exists(filepath):
+                print(f"[INIT] Création du fichier {os.path.basename(filepath)}")
+                with open(filepath, "w") as f:
+                    json.dump(default_content, f)
 
-        if not os.path.exists(DATABASES_FILE):
-            with open(DATABASES_FILE, "w") as f:
-                json.dump([], f)
-
-        if not os.path.exists(SESSIONS_FILE):
-            with open(SESSIONS_FILE, "w") as f:
-                json.dump({}, f)
-
-        if not os.path.exists(VERIFICATION_CODES_FILE):
-            with open(VERIFICATION_CODES_FILE, "w") as f:
-                json.dump({}, f)
-
-        if not os.path.exists(PAYMENTS_FILE):
-            with open(PAYMENTS_FILE, "w") as f:
-                json.dump([], f)
-
-        if not os.path.exists(SUBSCRIPTIONS_FILE):
-            with open(SUBSCRIPTIONS_FILE, "w") as f:
-                json.dump({}, f)
     except Exception as e:
         print(f"Erreur lors de l'initialisation des fichiers: {e}")
         print(f"BASE_DIR: {BASE_DIR}")

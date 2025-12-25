@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Test du Système de Clés - FULLLOOKUP</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+                color: #ffffff;
+                min-height: 100vh;
+                padding: 20px;
+            }
+
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: rgba(30, 30, 30, 0.8);
+                border-radius: 15px;
+                padding: 30px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+
+            h1 {
+                text-align: center;
+                color: #ef4444;
+                margin-bottom: 30px;
+                font-size: 2.5rem;
+            }
+
+            .section {
+                margin-bottom: 40px;
+                padding: 20px;
+                background: rgba(20, 20, 20, 0.6);
+                border-radius: 10px;
+                border: 1px solid #333;
+            }
+
+            .section h2 {
+                color: #ef4444;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #ef4444;
+                padding-bottom: 10px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                color: #cccccc;
+                font-weight: 500;
+            }
+
+            input {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #444;
+                border-radius: 8px;
+                background: #2a2a2a;
+                color: #ffffff;
+                font-size: 16px;
+            }
+
+            input:focus {
+                outline: none;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+            }
+
+            button {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                transition: all 0.3s;
+                margin-right: 10px;
+                margin-bottom: 10px;
+            }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+            }
+
+            button:disabled {
+                background: #666;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .result {
+                margin-top: 20px;
+                padding: 15px;
+                border-radius: 8px;
+                white-space: pre-wrap;
+                font-family: "Courier New", monospace;
+                font-size: 14px;
+            }
+
+            .success {
+                background: rgba(34, 197, 94, 0.2);
+                border: 1px solid #22c55e;
+                color: #22c55e;
+            }
+
+            .error {
+                background: rgba(239, 68, 68, 0.2);
+                border: 1px solid #ef4444;
+                color: #ef4444;
+            }
+
+            .info {
+                background: rgba(59, 130, 246, 0.2);
+                border: 1px solid #3b82f6;
+                color: #3b82f6;
+            }
+
+            .key-display {
+                background: #1a1a1a;
+                border: 2px solid #ef4444;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 10px 0;
+                text-align: center;
+            }
+
+            .key-code {
+                font-size: 24px;
+                font-weight: bold;
+                color: #ef4444;
+                letter-spacing: 3px;
+                margin: 10px 0;
+            }
+
+            .instructions {
+                background: rgba(59, 130, 246, 0.1);
+                border: 1px solid #3b82f6;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .instructions h3 {
+                color: #3b82f6;
+                margin-bottom: 10px;
+            }
+
+            .instructions p {
+                color: #cccccc;
+                line-height: 1.6;
+                margin-bottom: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔑 Test du Système de Clés</h1>
+
+            <div class="instructions">
+                <h3>📋 Instructions d'utilisation</h3>
+                <p>
+                    <strong>1. Génération de clés (Admin):</strong> Générez une
+                    nouvelle clé avec les paramètres souhaités
+                </p>
+                <p>
+                    <strong>2. Vérification:</strong> Testez le statut de la clé
+                    générée
+                </p>
+                <p>
+                    <strong>3. Inscription avec clé:</strong> Utilisez la clé +
+                    email + mot de passe pour créer un compte
+                </p>
+                <p>
+                    <strong>4. Connexion normale:</strong> Connectez-vous avec
+                    votre email et mot de passe (plus besoin de clé)
+                </p>
+            </div>
+
+            <!-- Section: Connexion Admin -->
+            <div class="section">
+                <h2>👑 Connexion Admin</h2>
+                <div class="form-group">
+                    <label for="adminEmail">Email Admin:</label>
+                    <input
+                        type="text"
+                        id="adminEmail"
+                        value="admin@fullookup.com"
+                        placeholder="admin@fullookup.com"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Mot de passe Admin:</label>
+                    <input
+                        type="password"
+                        id="adminPassword"
+                        value="Admin123!"
+                        placeholder="Admin123!"
+                    />
+                </div>
+                <button onclick="loginAdmin()">🔑 Connexion Admin</button>
+                <div id="adminLoginResult"></div>
+            </div>
+
+            <!-- Section Admin: Génération de clés -->
+            <div class="section">
+                <h2>🔧 Admin: Générer une Clé</h2>
+                <div class="form-group">
+                    <label for="adminToken">Token Admin:</label>
+                    <input
+                        type="text"
+                        id="adminToken"
+                        placeholder="Token obtenu après connexion admin"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="keyName">Nom de la clé:</label>
+                    <input
+                        type="text"
+                        id="keyName"
+                        placeholder="Clé test utilisateur"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="keyDuration">Durée:</label>
+                    <select
+                        id="keyDuration"
+                        style="
+                            width: 100%;
+                            padding: 12px;
+                            border: 1px solid #444;
+                            border-radius: 8px;
+                            background: #2a2a2a;
+                            color: #ffffff;
+                        "
+                    >
+                        <option value="1h">1 heure</option>
+                        <option value="1d">1 jour</option>
+                        <option value="1w">1 semaine</option>
+                        <option value="1m" selected>1 mois</option>
+                        <option value="3m">3 mois</option>
+                        <option value="6m">6 mois</option>
+                        <option value="1y">1 an</option>
+                        <option value="lifetime">Lifetime</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isAdminKey" /> Clé Admin
+                        (réutilisable)
+                    </label>
+                </div>
+                <button onclick="generateKey()">🔑 Générer la Clé</button>
+                <div id="generateResult"></div>
+            </div>
+
+            <!-- Section: Vérification de clé -->
+            <div class="section">
+                <h2>🔍 Vérifier une Clé</h2>
+                <div class="form-group">
+                    <label for="checkKey">Code de la clé:</label>
+                    <input
+                        type="text"
+                        id="checkKey"
+                        placeholder="Entrez le code de la clé"
+                    />
+                </div>
+                <button onclick="checkKey()">✅ Vérifier la Clé</button>
+                <div id="checkResult"></div>
+            </div>
+
+            <!-- Section: Inscription avec clé -->
+            <div class="section">
+                <h2>📝 Inscription avec Clé + Email + Mot de passe</h2>
+                <div class="form-group">
+                    <label for="registerKey">Code de la clé:</label>
+                    <input
+                        type="text"
+                        id="registerKey"
+                        placeholder="Entrez le code de la clé"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email:</label>
+                    <input
+                        type="email"
+                        id="registerEmail"
+                        placeholder="votre@email.com"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Mot de passe:</label>
+                    <input
+                        type="password"
+                        id="registerPassword"
+                        placeholder="Minimum 8 caractères"
+                    />
+                </div>
+                <button onclick="registerWithKey()">🚀 S'inscrire</button>
+                <div id="registerResult"></div>
+            </div>
+
+            <!-- Section: Connexion normale -->
+            <div class="section">
+                <h2>🔐 Connexion avec Email + Mot de passe</h2>
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input
+                        type="email"
+                        id="loginEmail"
+                        placeholder="votre@email.com"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Mot de passe:</label>
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Votre mot de passe"
+                    />
+                </div>
+                <button onclick="loginNormal()">🔑 Se Connecter</button>
+                <div id="loginResult"></div>
+            </div>
+
+            <!-- Section: Informations utilisateur -->
+            <div class="section">
+                <h2>👤 Informations Utilisateur</h2>
+                <button onclick="getUserInfo()">📊 Mes Informations</button>
+                <div id="userResult"></div>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = window.location.origin + "/api";
+
+            // Connexion admin
+            async function loginAdmin() {
+                const email = document
+                    .getElementById("adminEmail")
+                    .value.trim();
+                const password = document
+                    .getElementById("adminPassword")
+                    .value.trim();
+
+                if (!email || !password) {
+                    displayResult(
+                        "adminLoginResult",
+                        "Email et mot de passe requis",
+                        "error",
+                    );
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/auth/admin-login`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                email: email,
+                                password: password,
+                            }),
+                        },
+                    );
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult("adminLoginResult", data, "success");
+
+                        // Auto-remplir le token admin
+                        if (data.token) {
+                            document.getElementById("adminToken").value =
+                                data.token;
+                            localStorage.setItem("adminToken", data.token);
+
+                            const adminDisplay = document.createElement("div");
+                            adminDisplay.className = "key-display";
+                            adminDisplay.innerHTML = `
+                            <h3>👑 Connexion admin réussie!</h3>
+                            <p>Username: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                            <p>Rôle: ${data.user.role}</p>
+                            <p>Token: ${data.token.substring(0, 20)}...</p>
+                        `;
+
+                            const resultDiv =
+                                document.getElementById("adminLoginResult");
+                            resultDiv.appendChild(adminDisplay);
+                        }
+                    } else {
+                        displayResult("adminLoginResult", data, "error");
+                    }
+                } catch (error) {
+                    displayResult(
+                        "adminLoginResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Fonction utilitaire pour afficher les résultats
+            function displayResult(elementId, data, type = "info") {
+                const element = document.getElementById(elementId);
+                element.className = `result ${type}`;
+                element.textContent =
+                    typeof data === "string"
+                        ? data
+                        : JSON.stringify(data, null, 2);
+            }
+
+            // Génération de clé par admin
+            async function generateKey() {
+                const token = document
+                    .getElementById("adminToken")
+                    .value.trim();
+                const name = document.getElementById("keyName").value.trim();
+                const duration = document.getElementById("keyDuration").value;
+                const isAdmin = document.getElementById("isAdminKey").checked;
+
+                if (!token) {
+                    displayResult(
+                        "generateResult",
+                        "Token admin requis",
+                        "error",
+                    );
+                    return;
+                }
+
+                // Générer un code aléatoire
+                const randomCode =
+                    "KEY-" +
+                    Math.random().toString(36).substring(2, 8).toUpperCase() +
+                    "-" +
+                    Math.random().toString(36).substring(2, 8).toUpperCase();
+
+                try {
+                    const response = await fetch(`${API_BASE}/keys`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            code: randomCode,
+                            name: name || "Clé test",
+                            duration: duration,
+                            is_admin: isAdmin,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult("generateResult", data, "success");
+
+                        // Afficher la clé générée de manière visible
+                        if (data.key && data.key.code) {
+                            const keyDisplay = document.createElement("div");
+                            keyDisplay.className = "key-display";
+                            keyDisplay.innerHTML = `
+                            <h3>🎉 Clé générée avec succès!</h3>
+                            <div class="key-code">${data.key.code}</div>
+                            <p>Nom: ${data.key.name}</p>
+                            <p>Expire le: ${data.key.expires_at === "Infinity" ? "Jamais" : new Date(data.key.expires_at).toLocaleString()}</p>
+                            <p>Type: ${data.key.is_admin ? "Admin (réutilisable)" : "Utilisateur"}</p>
+                        `;
+
+                            const resultDiv =
+                                document.getElementById("generateResult");
+                            resultDiv.appendChild(keyDisplay);
+
+                            // Auto-remplir les autres champs
+                            document.getElementById("checkKey").value =
+                                data.key.code;
+                            document.getElementById("registerKey").value =
+                                data.key.code;
+                        }
+                    } else {
+                        displayResult("generateResult", data, "error");
+                    }
+                } catch (error) {
+                    displayResult(
+                        "generateResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Vérification de clé
+            async function checkKey() {
+                const keyCode = document
+                    .getElementById("checkKey")
+                    .value.trim();
+
+                if (!keyCode) {
+                    displayResult("checkResult", "Code de clé requis", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/keys/check/${keyCode}`,
+                    );
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult(
+                            "checkResult",
+                            data,
+                            data.exists ? "success" : "error",
+                        );
+                    } else {
+                        displayResult("checkResult", data, "error");
+                    }
+                } catch (error) {
+                    displayResult(
+                        "checkResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Inscription avec clé + email + mot de passe
+            async function registerWithKey() {
+                const keyCode = document
+                    .getElementById("registerKey")
+                    .value.trim();
+                const email = document
+                    .getElementById("registerEmail")
+                    .value.trim();
+                const password = document
+                    .getElementById("registerPassword")
+                    .value.trim();
+
+                if (!keyCode || !email || !password) {
+                    displayResult(
+                        "registerResult",
+                        "Clé, email et mot de passe requis",
+                        "error",
+                    );
+                    return;
+                }
+
+                if (password.length < 8) {
+                    displayResult(
+                        "registerResult",
+                        "Le mot de passe doit contenir au moins 8 caractères",
+                        "error",
+                    );
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}/auth/register-with-key`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                key: keyCode,
+                                email: email,
+                                password: password,
+                            }),
+                        },
+                    );
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult("registerResult", data, "success");
+
+                        // Sauvegarder le token
+                        if (data.token) {
+                            localStorage.setItem("token", data.token);
+
+                            const userDisplay = document.createElement("div");
+                            userDisplay.className = "key-display";
+                            userDisplay.innerHTML = `
+                            <h3>🎉 Compte créé avec succès!</h3>
+                            <p>Username: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                            <p>ID: ${data.user.id}</p>
+                            <p>Rôle: ${data.user.role}</p>
+                            <p><strong>Vous pouvez maintenant vous connecter avec votre email et mot de passe!</strong></p>
+                        `;
+
+                            const resultDiv =
+                                document.getElementById("registerResult");
+                            resultDiv.appendChild(userDisplay);
+
+                            // Auto-remplir les champs de connexion
+                            document.getElementById("loginEmail").value = email;
+                            document.getElementById("loginPassword").value =
+                                password;
+                        }
+                    } else {
+                        displayResult("registerResult", data, "error");
+                    }
+                } catch (error) {
+                    displayResult(
+                        "registerResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Connexion normale avec email et mot de passe
+            async function loginNormal() {
+                const email = document
+                    .getElementById("loginEmail")
+                    .value.trim();
+                const password = document
+                    .getElementById("loginPassword")
+                    .value.trim();
+
+                if (!email || !password) {
+                    displayResult(
+                        "loginResult",
+                        "Email et mot de passe requis",
+                        "error",
+                    );
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/auth/login`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult("loginResult", data, "success");
+
+                        // Sauvegarder le token
+                        if (data.token) {
+                            localStorage.setItem("token", data.token);
+
+                            const userDisplay = document.createElement("div");
+                            userDisplay.className = "key-display";
+                            userDisplay.innerHTML = `
+                            <h3>🔐 Connexion réussie!</h3>
+                            <p>Username: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                            <p>ID: ${data.user.id}</p>
+                            <p>Rôle: ${data.user.role}</p>
+                        `;
+
+                            const resultDiv =
+                                document.getElementById("loginResult");
+                            resultDiv.appendChild(userDisplay);
+                        }
+                    } else {
+                        displayResult("loginResult", data, "error");
+                    }
+                } catch (error) {
+                    displayResult(
+                        "loginResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Récupérer les informations utilisateur
+            async function getUserInfo() {
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    displayResult(
+                        "userResult",
+                        "Vous devez être connecté pour voir vos informations",
+                        "error",
+                    );
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/auth/me`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayResult("userResult", data, "success");
+                    } else {
+                        displayResult("userResult", data, "error");
+                        if (data.error === "Token invalide ou expiré") {
+                            localStorage.removeItem("token");
+                        }
+                    }
+                } catch (error) {
+                    displayResult(
+                        "userResult",
+                        `Erreur: ${error.message}`,
+                        "error",
+                    );
+                }
+            }
+
+            // Fonction pour copier le code de clé
+            function copyKey(keyCode) {
+                navigator.clipboard.writeText(keyCode).then(() => {
+                    alert("Code de clé copié dans le presse-papiers!");
+                });
+            }
+
+            // Vérifier si un token existe au chargement
+            window.onload = function () {
+                const token = localStorage.getItem("token");
+                const adminToken = localStorage.getItem("adminToken");
+
+                if (token) {
+                    const info = document.createElement("div");
+                    info.className = "result success";
+                    info.innerHTML =
+                        '✅ Token utilisateur trouvé dans le stockage local. Vous pouvez utiliser "Mes Informations".';
+                    document
+                        .querySelector(".container")
+                        .insertBefore(info, document.querySelector(".section"));
+                }
+
+                if (adminToken) {
+                    document.getElementById("adminToken").value = adminToken;
+                    const info = document.createElement("div");
+                    info.className = "result success";
+                    info.innerHTML =
+                        "👑 Token admin trouvé dans le stockage local. Vous pouvez générer des clés.";
+                    document
+                        .querySelector(".container")
+                        .insertBefore(info, document.querySelector(".section"));
+                }
+            };
+        </script>
+    </body>
+</html>

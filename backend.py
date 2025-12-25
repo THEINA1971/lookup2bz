@@ -706,6 +706,144 @@ def verify_email():
     return jsonify({"success": True, "message": "Email vérifié avec succès"}), 200
 
 
+@app.route("/api/auth/register-with-key", methods=["POST"])
+@limiter.limit("10 per hour")  # Max 10 inscriptions par heure par IP
+def register_with_key():
+    """Inscription avec clé + email + mot de passe"""
+    ip = get_client_ip()
+    data = request.get_json()
+
+    email = data.get("email", "").strip().lower() if data else ""
+    password = data.get("password", "").strip() if data else ""
+    key_code = data.get("key", "").strip() if data else ""
+
+    if not email or not password or not key_code:
+        log_attack(ip, "invalid_register_attempt", "Champs manquants")
+        return jsonify({"error": "Email, mot de passe et clé requis"}), 400
+
+    # Validation de l'email
+    is_valid, error_msg = validate_input(
+        email,
+        "Email",
+        max_length=255,
+        pattern=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+    )
+    if not is_valid:
+        log_attack(ip, "invalid_email_format", email)
+        return jsonify({"error": error_msg}), 400
+
+    # Validation du mot de passe
+    if len(password) < 8:
+        log_attack(ip, "weak_password", "Mot de passe trop court")
+        return jsonify(
+            {"error": "Le mot de passe doit contenir au moins 8 caractères"}
+        ), 400
+
+    # Validation de la clé
+    is_valid, error_msg = validate_input(
+        key_code, "Key", max_length=100, pattern=r"^[a-zA-Z0-9_-]+$"
+    )
+    if not is_valid:
+        log_attack(ip, "invalid_key_format", "Format de clé invalide")
+        return jsonify({"error": error_msg}), 400
+
+    # Vérifier la clé
+    keys = load_json(KEYS_FILE)
+    if key_code not in keys:
+        return jsonify({"error": "Clé invalide"}), 400
+
+    key_data = keys[key_code]
+
+    # Vérifier l'expiration de la clé
+    now = datetime.now(timezone.utc)
+    if key_data.get("expires_at") != "Infinity":
+        expires_at = datetime.fromisoformat(key_data["expires_at"])
+        if expires_at < now:
+            return jsonify({"error": "Clé expirée"}), 400
+
+    # Vérifier le statut de la clé
+    if key_data.get("status") == "used" and not key_data.get("is_admin"):
+        return jsonify({"error": "Cette clé a déjà été utilisée"}), 400
+
+    if key_data.get("status") != "active":
+        return jsonify({"error": "Cette clé n'est pas active"}), 400
+
+    # Vérifier si l'email est déjà utilisé
+    users = load_json(USERS_FILE)
+    for username, user in users.items():
+        if user.get("email", "").lower() == email:
+            return jsonify({"error": "Cet email est déjà utilisé"}), 400
+
+    # Créer l'utilisateur
+    user_id = secrets.token_hex(16)
+    username = email.split("@")[0] + "_" + secrets.token_hex(4)
+
+    # S'assurer que le username est unique
+    while username in users:
+        username = email.split("@")[0] + "_" + secrets.token_hex(4)
+
+    # Si c'est une clé admin, donner le rôle admin
+    user_role = "admin" if key_data.get("is_admin") else "user"
+
+    # Créer le compte utilisateur
+    users[username] = {
+        "id": user_id,
+        "username": username,
+        "email": email,
+        "password_hash": generate_password_hash(password),
+        "created_at": now.isoformat(),
+        "role": user_role,
+        "active": True,
+        "email_verified": False,
+        "key_code": key_code,  # Clé utilisée pour l'inscription
+        "key_used_at": now.isoformat(),
+        "subscription_status": "none",
+        "last_login": None,
+        "ip_address": ip,
+    }
+
+    # Marquer la clé comme utilisée (sauf si c'est une clé admin réutilisable)
+    if not key_data.get("is_admin"):
+        key_data["used_by"] = user_id
+        key_data["used_at"] = now.isoformat()
+        key_data["status"] = "used"
+        key_data["used_by_email"] = email
+    else:
+        # Pour les clés admin, ajouter à l'historique
+        if "usage_history" not in key_data:
+            key_data["usage_history"] = []
+        key_data["usage_history"].append(
+            {"user_id": user_id, "email": email, "used_at": now.isoformat()}
+        )
+
+    # Sauvegarder
+    try:
+        save_json(KEYS_FILE, keys)
+        save_json(USERS_FILE, users)
+        print(
+            f"[OK] Utilisateur '{username}' créé avec email {email} et clé '{key_code}'"
+        )
+    except Exception as e:
+        print(f"[ERROR] Erreur lors de la sauvegarde: {e}")
+        return jsonify({"error": "Erreur lors de la création du compte"}), 500
+
+    token = generate_token(user_id)
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Compte créé avec succès - Vous pouvez maintenant vous connecter avec votre email et mot de passe",
+            "token": token,
+            "user": {
+                "id": user_id,
+                "username": username,
+                "email": email,
+                "role": user_role,
+            },
+        }
+    ), 201
+
+
 @app.route("/api/auth/register", methods=["POST"])
 @limiter.limit("3 per hour")  # Max 3 inscriptions par heure par IP
 def register():
@@ -1008,6 +1146,60 @@ def get_current_user():
             ), 200
 
     return jsonify({"error": "Utilisateur non trouvé"}), 404
+
+
+@app.route("/api/auth/admin-login", methods=["POST"])
+@limiter.limit("5 per minute")  # Max 5 tentatives par minute
+def admin_login():
+    """Connexion admin simplifiée pour les tests"""
+    data = request.get_json()
+
+    # Identifiants admin par défaut (à changer en production)
+    admin_email = "admin@fullookup.com"
+    admin_password = "Admin123!"
+
+    email = data.get("email", "").strip().lower() if data else ""
+    password = data.get("password", "").strip() if data else ""
+
+    if email == admin_email and password == admin_password:
+        # Trouver l'utilisateur admin
+        users = load_json(USERS_FILE)
+        admin_user = None
+
+        for username, user in users.items():
+            if (
+                user.get("email", "").lower() == admin_email
+                and user.get("role") == "admin"
+            ):
+                admin_user = user
+                break
+
+        if admin_user:
+            # Mettre à jour la dernière connexion
+            admin_user["last_login"] = datetime.now(timezone.utc).isoformat()
+            users[username] = admin_user
+            try:
+                save_json(USERS_FILE, users)
+            except Exception as e:
+                print(f"[WARNING] Erreur lors de la mise à jour de last_login: {e}")
+
+            token = generate_token(admin_user["id"])
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Connexion admin réussie",
+                    "token": token,
+                    "user": {
+                        "id": admin_user["id"],
+                        "username": admin_user["username"],
+                        "email": admin_user.get("email", ""),
+                        "role": admin_user.get("role", "admin"),
+                    },
+                }
+            ), 200
+
+    return jsonify({"error": "Identifiants admin invalides"}), 401
 
 
 @app.route("/api/auth/change-password", methods=["POST"])
@@ -1339,6 +1531,12 @@ def check_key_status(key_code):
         "created_by_email": key_data.get("created_by_email", "")
         if key_data.get("created_by_email")
         else None,
+        "login_method": "email_password",
+        "can_register": status == "active" and not is_expired,
+        "instructions": {
+            "register": "Utilisez cette clé pour valider votre inscription avec email et mot de passe",
+            "login": "Connectez-vous ensuite avec votre email et mot de passe",
+        },
     }
 
     return jsonify(result), 200

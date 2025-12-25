@@ -1142,6 +1142,114 @@ def delete_key(key_code):
         'message': 'Clé supprimée avec succès'
     }), 200
 
+@app.route('/api/keys/check/<key_code>', methods=['GET'])
+def check_key_status(key_code):
+    """Vérifie le statut d'une clé (PUBLIC - sans authentification)"""
+    if not key_code:
+        return jsonify({'error': 'Code de clé requis'}), 400
+    
+    keys = load_json(KEYS_FILE)
+    
+    if key_code not in keys:
+        return jsonify({
+            'success': False,
+            'exists': False,
+            'message': 'Clé non trouvée'
+        }), 404
+    
+    key_data = keys[key_code]
+    now = datetime.now(timezone.utc)
+    
+    # Vérifier l'expiration
+    is_expired = False
+    if key_data.get('expires_at') != 'Infinity':
+        expires_at = datetime.fromisoformat(key_data['expires_at'])
+        is_expired = expires_at < now
+    
+    # Déterminer le statut
+    status = key_data.get('status', 'active')
+    if is_expired and status == 'active':
+        status = 'expired'
+    
+    # Informations à retourner (sans données sensibles)
+    result = {
+        'success': True,
+        'exists': True,
+        'code': key_code,
+        'name': key_data.get('name', ''),
+        'status': status,
+        'is_active': status == 'active',
+        'is_used': status == 'used' or key_data.get('used_at') is not None,
+        'is_expired': is_expired or status == 'expired',
+        'is_admin': key_data.get('is_admin', False),
+        'created_at': key_data.get('created_at', ''),
+        'expires_at': key_data.get('expires_at', ''),
+        'duration': key_data.get('duration', ''),
+        'used_at': key_data.get('used_at'),
+        'used_by_email': key_data.get('used_by_email'),  # Email de l'utilisateur qui a utilisé la clé
+        'created_by_email': key_data.get('created_by_email', '')  # Email du créateur
+    }
+    
+    return jsonify(result), 200
+
+@app.route('/api/keys/check/<key_code>', methods=['GET'])
+def check_key_status(key_code):
+    """Vérifie le statut d'une clé (PUBLIC - pas besoin d'authentification)"""
+    if not key_code or len(key_code) < 8:
+        return jsonify({'error': 'Code de clé invalide'}), 400
+    
+    keys = load_json(KEYS_FILE)
+    
+    if key_code not in keys:
+        return jsonify({
+            'exists': False,
+            'error': 'Clé introuvable'
+        }), 404
+    
+    key_data = keys[key_code]
+    now = datetime.now(timezone.utc)
+    
+    # Vérifier l'expiration
+    is_expired = False
+    if key_data.get('expires_at') != 'Infinity':
+        expires_at = datetime.fromisoformat(key_data['expires_at'])
+        if expires_at < now:
+            is_expired = True
+            # Mettre à jour le statut
+            if key_data.get('status') != 'expired':
+                key_data['status'] = 'expired'
+                key_data['expired_at'] = now.isoformat()
+                keys[key_code] = key_data
+                try:
+                    save_json(KEYS_FILE, keys)
+                except:
+                    pass
+    
+    # Déterminer le statut
+    status = key_data.get('status', 'active')
+    if is_expired and status == 'active':
+        status = 'expired'
+    
+    # Informations à retourner (sans informations sensibles)
+    result = {
+        'exists': True,
+        'code': key_code,
+        'name': key_data.get('name', ''),
+        'status': status,
+        'is_active': status == 'active',
+        'is_used': status == 'used',
+        'is_expired': status == 'expired' or is_expired,
+        'is_admin': key_data.get('is_admin', False),
+        'created_at': key_data.get('created_at', ''),
+        'expires_at': key_data.get('expires_at', ''),
+        'duration': key_data.get('duration', ''),
+        'used_at': key_data.get('used_at'),
+        'used_by_email': key_data.get('used_by_email') if status == 'used' else None,  # Afficher l'email seulement si utilisée
+        'created_by_email': key_data.get('created_by_email', '') if key_data.get('created_by_email') else None
+    }
+    
+    return jsonify(result), 200
+
 @app.route('/api/keys/verify', methods=['POST'])
 def verify_key():
     """Vérifie si une clé est valide (pour le login frontend)"""

@@ -83,65 +83,129 @@
             </div>
 
             <!-- Create Key Card -->
-            <div class="simple-card">
-                <div class="simple-card-header">
-                    <h3>Créer une nouvelle clé</h3>
+            <div class="simple-card" style="background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <i class="fas fa-key" style="color: var(--primary);"></i>
+                        Créer une nouvelle clé
+                    </h3>
                 </div>
                 <div class="simple-card-body">
                     <div class="form-row">
-                        <div class="form-col">
-                            <label>Nom de la clé (optionnel)</label>
-                            <input type="text" id="key-name-input" placeholder="Ex: Clé pour utilisateur X" class="input-simple">
+                        <div class="form-col" style="flex: 1;">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-tag" style="font-size: 12px; color: var(--text-muted);"></i>
+                                Nom de la clé (optionnel)
+                            </label>
+                            <input type="text" id="key-name-input" placeholder="Ex: Clé pour utilisateur X" class="input-simple" style="font-size: 14px;">
+                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Facilite l'identification de la clé</small>
                         </div>
-                        <div class="form-col">
-                            <label>Clé d'accès</label>
+                        <div class="form-col" style="flex: 1.5;">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-key" style="font-size: 12px; color: var(--text-muted);"></i>
+                                Clé d'accès
+                            </label>
                             <div class="input-group-simple">
-                                <input type="text" id="new-key-input" placeholder="Générer ou entrer une clé" class="input-simple">
-                                <button onclick="generateKeyInput()" class="btn-secondary">Générer</button>
+                                <input type="text" id="new-key-input" placeholder="Générer ou entrer une clé" class="input-simple" style="font-family: monospace; letter-spacing: 1px; font-size: 14px;">
+                                <button onclick="generateKeyInput()" class="btn-secondary" style="white-space: nowrap;">
+                                    <i class="fas fa-random"></i>
+                                    Générer
+                                </button>
                             </div>
-                            <small>Minimum 8 caractères</small>
+                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Format recommandé: BH-XXXX-XXXX (minimum 8 caractères)</small>
                         </div>
-                        <div class="form-col">
-                            <label>Durée de validité</label>
-                            <select id="key-duration" class="input-simple">
+                        <div class="form-col" style="flex: 1;">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-clock" style="font-size: 12px; color: var(--text-muted);"></i>
+                                Durée de validité
+                            </label>
+                            <select id="key-duration" class="input-simple" style="font-size: 14px;">
                                 <option value="1h">1 heure</option>
                                 <option value="1d" selected>1 jour</option>
                                 <option value="1w">1 semaine</option>
                                 <option value="1m">1 mois</option>
                                 <option value="lifetime">Lifetime</option>
                             </select>
+                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Période de validité de la clé</small>
                         </div>
                     </div>
-                    <div class="form-row" style="margin-top: 15px;">
-                        <div class="form-col">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="key-is-admin" style="width: auto; cursor: pointer;">
-                                <span>Clé Admin (peut générer d'autres clés)</span>
+                    <div class="form-row" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="form-col" style="flex: 1;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; transition: all 0.3s ease;" onmouseenter="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseleave="this.style.background='rgba(239, 68, 68, 0.05)'">
+                                <input type="checkbox" id="key-is-admin" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: var(--text); margin-bottom: 4px;">
+                                        <i class="fas fa-shield-alt" style="color: #ef4444; margin-right: 6px;"></i>
+                                        Clé Admin
+                                    </div>
+                                    <small style="color: var(--text-muted); display: block;">Peut générer d'autres clés et accéder aux fonctionnalités admin</small>
+                                </div>
                             </label>
-                            <small style="color: var(--text-muted);">Seuls les administrateurs peuvent créer des clés admin</small>
                         </div>
-                        <div class="form-col-auto">
-                            <button onclick="createKey()" class="btn-primary">
+                        <div class="form-col-auto" style="display: flex; align-items: center;">
+                            <button onclick="createKey()" class="btn-primary" style="min-width: 140px; padding: 12px 24px; font-size: 15px; font-weight: 600;">
                                 <i class="fas fa-plus"></i>
-                                Créer
+                                Créer la clé
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Keys List -->
-            <div class="simple-card">
-                <div class="simple-card-header">
-                    <h3>Clés créées</h3>
-                    <div class="filter-tabs">
-                        <button onclick="filterKeys('all')" class="filter-tab active" id="filter-all">Toutes</button>
-                        <button onclick="filterKeys('active')" class="filter-tab" id="filter-active">Actives</button>
-                        <button onclick="filterKeys('inactive')" class="filter-tab" id="filter-inactive">Inactives</button>
-                    </div>
+            <!-- Check Key Status Card -->
+            <div class="simple-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.3);">
+                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                    <h3 style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-search" style="color: var(--primary);"></i>
+                        Vérifier le statut d'une clé
+                    </h3>
+                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Vérification publique - Aucune authentification requise</small>
                 </div>
                 <div class="simple-card-body">
-                    <div id="keys-list" class="keys-list-simple">
+                    <div class="form-row">
+                        <div class="form-col" style="flex: 1;">
+                            <label>Code de la clé</label>
+                            <input type="text" id="check-key-input" placeholder="Ex: BH-ZPO3-ZR1D" class="input-simple" style="font-family: monospace; letter-spacing: 1px; font-size: 15px;" onkeypress="if(event.key === 'Enter') checkKeyStatus()">
+                        </div>
+                        <div class="form-col-auto" style="display: flex; align-items: flex-end;">
+                            <button onclick="checkKeyStatus()" class="btn-primary" style="min-width: 120px;">
+                                <i class="fas fa-search"></i>
+                                Vérifier
+                            </button>
+                        </div>
+                    </div>
+                    <div id="key-status-result" style="margin-top: 20px; display: none;">
+                        <!-- Résultat de la vérification -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keys List -->
+            <div class="simple-card" style="background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; width: 100%;">
+                        <h3 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                            <i class="fas fa-list" style="color: var(--primary);"></i>
+                            Clés créées
+                        </h3>
+                        <div class="filter-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="filterKeys('all')" class="filter-tab active" id="filter-all" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-list"></i> Toutes
+                            </button>
+                            <button onclick="filterKeys('active')" class="filter-tab" id="filter-active" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-check-circle"></i> Actives
+                            </button>
+                            <button onclick="filterKeys('used')" class="filter-tab" id="filter-used" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-user-check"></i> Utilisées
+                            </button>
+                            <button onclick="filterKeys('expired')" class="filter-tab" id="filter-expired" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-clock"></i> Expirées
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="simple-card-body" style="padding: 20px;">
+                    <div id="keys-list" class="keys-list-simple" style="display: flex; flex-direction: column; gap: 12px;">
                         <!-- Keys will be displayed here -->
                     </div>
                 </div>

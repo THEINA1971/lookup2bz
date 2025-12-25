@@ -325,8 +325,11 @@ async function loadKeys() {
                 createdAt: new Date(key.created_at).getTime(),
                 expiresAt: key.expires_at === 'Infinity' ? Infinity : new Date(key.expires_at).getTime(),
                 duration: key.duration,
-                status: key.status,
-                is_admin: key.is_admin || false
+                status: key.status || 'active',
+                is_admin: key.is_admin || false,
+                used_at: key.used_at || null,
+                used_by_email: key.used_by_email || null,
+                created_by_email: key.created_by_email || null
             }
         ]).sort((a, b) => b[1].createdAt - a[1].createdAt);
         
@@ -375,14 +378,17 @@ function displayKeys(keysArray) {
     
     const now = Date.now();
     
-    keysArray.forEach(([code, data]) => {
+        keysArray.forEach(([code, data]) => {
         const isExpired = data.expiresAt !== Infinity && now > data.expiresAt;
-        const status = isExpired ? 'expired' : 'active';
-        const isMaster = data.isMaster || code === MASTER_KEY;
+        const status = data.status || (isExpired ? 'expired' : 'active');
+        const isMaster = data.isMaster || code === MASTER_KEY || code === 'ADMIN-MASTER-2024';
+        const isUsed = status === 'used' || data.used_at !== null;
         
         // Apply filter
-        if (currentFilter === 'active' && isExpired) return;
-        if (currentFilter === 'inactive' && !isExpired) return;
+        if (currentFilter === 'active' && (isExpired || isUsed || status !== 'active')) return;
+        if (currentFilter === 'used' && !isUsed) return;
+        if (currentFilter === 'expired' && status !== 'expired' && !isExpired) return;
+        if (currentFilter === 'inactive' && !isExpired && !isUsed) return;
         
         const createdAt = new Date(data.createdAt).toLocaleString('fr-FR', { 
             day: '2-digit', 
@@ -403,26 +409,60 @@ function displayKeys(keysArray) {
         
         const keyItem = document.createElement('div');
         keyItem.className = 'key-item-simple';
+        keyItem.style.cssText = 'padding: 16px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.02); transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;';
+        keyItem.onmouseenter = function() { this.style.background = 'rgba(255, 255, 255, 0.05)'; this.style.borderColor = 'rgba(255, 255, 255, 0.2)'; };
+        keyItem.onmouseleave = function() { this.style.background = 'rgba(255, 255, 255, 0.02)'; this.style.borderColor = 'rgba(255, 255, 255, 0.1)'; };
         
         const isAdminKey = data.is_admin || false;
         const keyName = data.name || '';
         
+        const statusColors = {
+            'active': '#10b981',
+            'used': '#ef4444',
+            'expired': '#f59e0b'
+        };
+        const statusColor = statusColors[status] || '#6b7280';
+        
         keyItem.innerHTML = `
             <div style="flex: 1;">
-                ${keyName ? `<div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">${keyName}</div>` : ''}
-                <div class="key-code-simple" style="${isMaster || isAdminKey ? 'color: #ffd700;' : ''}">
-                    ${code} 
-                    ${isMaster ? '<i class="fas fa-crown" style="margin-left: 8px; color: #ffd700;"></i>' : ''}
-                    ${isAdminKey ? '<span style="margin-left: 8px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">ADMIN</span>' : ''}
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    ${keyName ? `<div style="font-weight: 600; color: var(--text-primary); font-size: 15px;">${keyName}</div>` : ''}
+                    <div class="key-code-simple" style="font-family: monospace; font-size: 14px; letter-spacing: 1px; ${isMaster || isAdminKey ? 'color: #ffd700;' : 'color: var(--text-primary);'}">
+                        ${code} 
+                        ${isMaster ? '<i class="fas fa-crown" style="margin-left: 8px; color: #ffd700;"></i>' : ''}
+                        ${isAdminKey ? '<span style="margin-left: 8px; background: #ef4444; color: white; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">ADMIN</span>' : ''}
+                    </div>
                 </div>
-                <div class="key-meta-simple">
-                    <span>Créée: ${createdAt}</span>
-                    <span>Expire: ${expiresAt}</span>
-                    <span>${getDurationLabel(data.duration)}</span>
+                <div class="key-meta-simple" style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    <span><i class="fas fa-calendar-plus" style="margin-right: 4px;"></i>Créée: ${createdAt}</span>
+                    <span><i class="fas fa-calendar-times" style="margin-right: 4px;"></i>Expire: ${expiresAt}</span>
+                    <span><i class="fas fa-clock" style="margin-right: 4px;"></i>${getDurationLabel(data.duration)}</span>
+                    ${data.created_by_email ? `<span><i class="fas fa-user" style="margin-right: 4px;"></i>Créateur: ${data.created_by_email}</span>` : ''}
                 </div>
+                ${isUsed && data.used_by_email ? `
+                    <div style="margin-top: 12px; padding: 12px; background: rgba(245, 158, 11, 0.15); border-left: 3px solid #f59e0b; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-user-check" style="color: #f59e0b; font-size: 14px;"></i>
+                            <div style="font-size: 13px; color: #f59e0b; font-weight: 700;">Clé utilisée</div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.8; padding-left: 22px;">
+                            <div><strong style="color: var(--text-primary);">Utilisée par:</strong> <span style="color: var(--text);">${data.used_by_email}</span></div>
+                            ${data.used_at ? `<div style="margin-top: 4px;"><strong style="color: var(--text-primary);">Date:</strong> <span style="color: var(--text);">${new Date(data.used_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div>` : ''}
+                        </div>
+                    </div>
+                ` : status === 'active' ? `
+                    <div style="margin-top: 12px; padding: 12px; background: rgba(16, 185, 129, 0.15); border-left: 3px solid #10b981; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle" style="color: #10b981; font-size: 14px;"></i>
+                            <div style="font-size: 13px; color: #10b981; font-weight: 700;">Clé disponible pour l'inscription</div>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span class="key-status-simple ${status}">${status === 'active' ? 'Active' : 'Expirée'}</span>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+                <span style="padding: 6px 14px; background: ${statusColor}; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap;">
+                    ${status === 'active' ? 'Active' : status === 'used' ? 'Utilisée' : status === 'expired' ? 'Expirée' : status}
+                </span>
                 ${!isMaster ? `
                     <button onclick="event.stopPropagation(); copyKey('${code}')" class="btn-icon" title="Copier">
                         <i class="fas fa-copy"></i>
@@ -453,13 +493,294 @@ function getDurationLabel(duration) {
 function filterKeys(filter) {
     currentFilter = filter;
     
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('.filter-tab').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    document.getElementById(`filter-${filter}`).classList.add('active');
+    const filterBtn = document.getElementById(`filter-${filter}`);
+    if (filterBtn) {
+        filterBtn.classList.add('active');
+    }
     
     loadKeys();
+}
+
+// Check Key Status (Public - No Auth Required)
+async function checkKeyStatus() {
+    const keyCode = document.getElementById('check-key-input').value.trim();
+    const resultDiv = document.getElementById('key-status-result');
+    
+    if (!keyCode) {
+        showNotification('Veuillez entrer un code de clé', 'error');
+        return;
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i><p style="margin-top: 10px;">Vérification en cours...</p></div>';
+    
+    try {
+        const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/keys/check/${encodeURIComponent(keyCode)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            resultDiv.innerHTML = `
+                <div style="padding: 20px; background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.5); border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <i class="fas fa-times-circle" style="font-size: 24px; color: var(--danger);"></i>
+                        <h4 style="margin: 0; color: var(--danger);">Clé introuvable</h4>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0;">${data.error || 'Cette clé n\'existe pas dans notre base de données.'}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Afficher les résultats
+        const statusColors = {
+            'active': '#10b981',
+            'used': '#f59e0b',
+            'expired': '#ef4444',
+            'cancelled': '#6b7280'
+        };
+        
+        const statusLabels = {
+            'active': 'Active',
+            'used': 'Utilisée',
+            'expired': 'Expirée',
+            'cancelled': 'Annulée'
+        };
+        
+        const status = data.status || 'active';
+        const statusColor = statusColors[status] || '#6b7280';
+        const statusLabel = statusLabels[status] || status;
+        
+        const createdAt = data.created_at ? new Date(data.created_at).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'N/A';
+        
+        const expiresAt = data.expires_at && data.expires_at !== 'Infinity' 
+            ? new Date(data.expires_at).toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : 'Jamais';
+        
+        const usedAt = data.used_at 
+            ? new Date(data.used_at).toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : null;
+        
+        resultDiv.innerHTML = `
+            <div style="padding: 24px; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 2px solid ${statusColor}; border-radius: 16px; box-shadow: 0 0 30px ${statusColor}40;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; color: var(--text); font-size: 20px;">${data.name || data.code}</h3>
+                        <code style="background: rgba(239, 68, 68, 0.2); padding: 6px 12px; border-radius: 6px; font-size: 14px; letter-spacing: 1px; color: var(--primary-light);">${data.code}</code>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: inline-block; padding: 8px 16px; background: ${statusColor}; color: white; border-radius: 8px; font-weight: 700; font-size: 14px; text-transform: uppercase;">
+                            ${statusLabel}
+                        </span>
+                        ${data.is_admin ? '<div style="margin-top: 8px;"><span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">ADMIN</span></div>' : ''}
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
+                    <div style="padding: 12px; background: rgba(0, 0, 0, 0.5); border-radius: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Créée le</div>
+                        <div style="font-weight: 600; color: var(--text);">${createdAt}</div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(0, 0, 0, 0.5); border-radius: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Expire le</div>
+                        <div style="font-weight: 600; color: var(--text);">${expiresAt}</div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(0, 0, 0, 0.5); border-radius: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Durée</div>
+                        <div style="font-weight: 600; color: var(--text);">${getDurationLabel(data.duration)}</div>
+                    </div>
+                </div>
+                
+                ${data.is_used && usedAt ? `
+                    <div style="margin-top: 20px; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <i class="fas fa-user-check" style="color: #f59e0b;"></i>
+                            <strong style="color: var(--text);">Clé utilisée</strong>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 14px; margin-left: 28px;">
+                            <div><strong>Date d'utilisation :</strong> ${usedAt}</div>
+                            ${data.used_by_email ? `<div style="margin-top: 4px;"><strong>Par :</strong> ${data.used_by_email}</div>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${data.is_active && !data.is_used ? `
+                    <div style="margin-top: 20px; padding: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                            <strong style="color: var(--text);">Cette clé est active et peut être utilisée pour l'inscription</strong>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${data.is_expired ? `
+                    <div style="margin-top: 20px; padding: 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i>
+                            <strong style="color: var(--text);">Cette clé est expirée et ne peut plus être utilisée</strong>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Erreur lors de la vérification:', error);
+        resultDiv.innerHTML = `
+            <div style="padding: 20px; background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.5); border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px; color: var(--danger);"></i>
+                    <h4 style="margin: 0; color: var(--danger);">Erreur</h4>
+                </div>
+                <p style="color: var(--text-muted); margin: 0;">Erreur lors de la vérification de la clé. Veuillez réessayer.</p>
+            </div>
+        `;
+    }
+}
+
+// Ancienne fonction checkKeyStatus (remplacée)
+async function checkKeyStatus_OLD() {
+    const keyInput = document.getElementById('check-key-input');
+    const resultDiv = document.getElementById('key-status-result');
+    
+    if (!keyInput || !resultDiv) return;
+    
+    const keyCode = keyInput.value.trim();
+    
+    if (!keyCode) {
+        resultDiv.innerHTML = '<div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px; color: #ef4444;">Veuillez entrer un code de clé</div>';
+        resultDiv.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const backendUrl = window.CONFIG ? window.CONFIG.getBackendUrl() : 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/keys/check/${encodeURIComponent(keyCode)}`, {
+            method: 'GET'
+        });
+        
+        const data = await response.json();
+        
+        if (!data.exists) {
+            resultDiv.innerHTML = `
+                <div style="padding: 15px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
+                    <div style="font-weight: 600; color: #ef4444; margin-bottom: 8px;">
+                        <i class="fas fa-times-circle"></i> Clé non trouvée
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">
+                        Cette clé n'existe pas dans la base de données.
+                    </div>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+            return;
+        }
+        
+        const statusColors = {
+            'active': '#10b981',
+            'used': '#ef4444',
+            'expired': '#f59e0b'
+        };
+        
+        const statusLabels = {
+            'active': 'Active',
+            'used': 'Utilisée',
+            'expired': 'Expirée'
+        };
+        
+        const statusColor = statusColors[data.status] || '#6b7280';
+        const statusLabel = statusLabels[data.status] || data.status;
+        
+        let usedInfo = '';
+        if (data.is_used && data.used_by_email) {
+            usedInfo = `
+                <div style="margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
+                    <div style="font-size: 12px; color: #ef4444; font-weight: 600; margin-bottom: 6px;">
+                        <i class="fas fa-user-check"></i> Clé utilisée
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">
+                        Utilisée par: <strong style="color: var(--text-primary);">${data.used_by_email}</strong>
+                        ${data.used_at ? `<br>Le: ${new Date(data.used_at).toLocaleString('fr-FR')}` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultDiv.innerHTML = `
+            <div style="padding: 20px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid ${statusColor}; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 16px;">
+                            ${data.name || 'Clé sans nom'}
+                        </div>
+                        <div style="font-family: monospace; font-size: 14px; color: var(--text-secondary); letter-spacing: 1px;">
+                            ${data.code}
+                        </div>
+                    </div>
+                    <span style="padding: 6px 12px; background: ${statusColor}; color: white; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                        ${statusLabel}
+                    </span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Créée le</div>
+                        <div style="font-size: 13px; color: var(--text-primary);">${new Date(data.created_at).toLocaleString('fr-FR')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Expire le</div>
+                        <div style="font-size: 13px; color: var(--text-primary);">${data.expires_at === 'Infinity' ? 'Jamais' : new Date(data.expires_at).toLocaleString('fr-FR')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Durée</div>
+                        <div style="font-size: 13px; color: var(--text-primary);">${getDurationLabel(data.duration)}</div>
+                    </div>
+                    ${data.created_by_email ? `
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Créateur</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">${data.created_by_email}</div>
+                        </div>
+                    ` : ''}
+                </div>
+                ${usedInfo}
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+    } catch (error) {
+        console.error('Erreur lors de la vérification:', error);
+        resultDiv.innerHTML = `
+            <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px; color: #ef4444;">
+                Erreur lors de la vérification de la clé. Veuillez réessayer.
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+    }
 }
 
 // Key Actions

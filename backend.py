@@ -14,9 +14,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
 
-import cloudscraper
 import jwt
 import requests
+from curl_cffi import requests as cffi_requests
 from flask import Flask, g, jsonify, request, send_from_directory, session
 from flask_cors import CORS
 from flask_limiter import Limiter
@@ -1925,11 +1925,10 @@ def proxy_breachhub(endpoint):
         # Construire l'URL complète
         url = f"{BREACHHUB_BASE_URL}/{endpoint}"
 
-        # Utiliser cloudscraper pour contourner Cloudflare
-        scraper = cloudscraper.create_scraper()
-
-        # Faire la requête avec timeout réduit
-        response = scraper.get(url, params=cleaned_params, timeout=20)
+        # Utiliser curl_cffi pour contourner Cloudflare (simulation TLS Chrome)
+        response = cffi_requests.get(
+            url, params=cleaned_params, timeout=20, impersonate="chrome110"
+        )
 
         # Vérifier le status code
         if response.status_code >= 400:

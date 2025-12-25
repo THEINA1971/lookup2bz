@@ -1,652 +1,1163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <title>Lookup2Bz - OSINT Platform</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5000;">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="admin-styles.css">
-</head>
-<body class="admin-body" id="main-body">
-    <!-- Header -->
-    <header class="admin-header">
-        <div class="header-left">
-            <div class="logo-section">
-                <img src="logo.svg" alt="Lookup2Bz Logo" class="logo-img">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+        <title>Lookup2Bz - OSINT Platform</title>
+        <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+        <!-- Security Headers -->
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' http://localhost:5000;"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="admin-styles.css" />
+    </head>
+    <body class="admin-body" id="main-body">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <div class="logo-section">
+                    <img src="logo.svg" alt="Lookup2Bz Logo" class="logo-img" />
+                </div>
             </div>
-        </div>
-        
-        <div class="header-right">
-            <a href="https://discord.gg/4dCtyUwzNb" target="_blank" class="discord-btn-header" title="Rejoindre notre serveur Discord">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 71 55'%3E%3Cg fill='%23ef4444'%3E%3Cpath d='M60.104 4.897c-5.459-2.426-11.633-4.164-18.115-5.16a.078.078 0 0 0-.079.037c-.211.375-.445.864-.608 1.25a56.68 56.68 0 0 0-16.243 0 12.928 12.928 0 0 0-.617-1.25.077.077 0 0 0-.079-.037c-6.48.996-12.655 2.733-18.115 5.16a.07.07 0 0 0-.032.027C.533 18.142-2.527 31.15 1.08 43.97a.082.082 0 0 0 .031.041c2.052 1.507 4.041 2.782 5.906 3.83a.077.077 0 0 0 .084-.007c.462-.35.91-.72 1.343-1.11a.076.076 0 0 0 .02-.086 40.9 40.9 0 0 1-.72-3.193.077.077 0 0 0-.06-.063c-2.435-.923-4.76-1.995-6.954-3.216a.08.08 0 0 1-.01-.133c.15-.122.3-.245.45-.368a.08.08 0 0 1 .077-.01c3.933 1.8 7.817 3.888 11.6 6.262a.078.078 0 0 0 .11-.029c.92-1.265 1.78-2.554 2.59-3.864a.076.076 0 0 0-.01-.095c-.307-.42-.614-.85-.9-1.272a.077.077 0 0 0-.128-.01c-1.733 1.27-3.473 2.52-5.23 3.737a.08.08 0 0 1-.112-.025c-.24-.342-.475-.69-.7-1.042a.08.08 0 0 1 .004-.09c.12-.2.24-.4.36-.595a.08.08 0 0 1 .083-.039c3.225.734 6.48 1.19 9.754 1.363a5.79 5.79 0 0 0 1.106-1.728 5.627 5.627 0 0 0-10.64-3.88.08.08 0 0 1-.14.048 7.976 7.976 0 0 1-1.203-1.8.077.077 0 0 1 .02-.094c.3-.28.6-.56.91-.83a.09.09 0 0 1 .053-.02c4.12.39 8.24 1.11 12.28 2.08a.08.08 0 0 0 .093-.033c.345-.59.72-1.17 1.12-1.72a.08.08 0 0 0 .01-.07c-1.26-2.35-2.6-4.66-4.02-6.91a.077.077 0 0 0-.128-.02c-.42.32-.84.66-1.24 1.01a.08.08 0 0 1-.11 0c-2.91-2.13-5.82-4.26-8.73-6.4a.08.08 0 0 1-.01-.133c.12-.1.24-.2.37-.29a.08.08 0 0 1 .086-.01c10.49 4.83 21.87 4.83 32.35 0a.08.08 0 0 1 .086.01c.13.09.25.19.37.29a.08.08 0 0 1-.01.133c-2.91 2.14-5.82 4.27-8.73 6.4a.08.08 0 0 1-.11 0c-.4-.35-.82-.69-1.24-1.01a.077.077 0 0 0-.128.02c-1.42 2.25-2.76 4.56-4.02 6.91a.08.08 0 0 0 .01.07c.4.55.775 1.13 1.12 1.72a.08.08 0 0 0 .093.033c4.04-.97 8.16-1.69 12.28-2.08a.09.09 0 0 1 .053.02c.31.27.61.55.91.83a.077.077 0 0 1 .02.094 7.976 7.976 0 0 1-1.203 1.8.08.08 0 0 1-.14-.048 5.627 5.627 0 0 0-10.64 3.88 5.79 5.79 0 0 0 1.106 1.728c3.275-.173 6.53-.63 9.754-1.363a.08.08 0 0 1 .083.04c.12.195.24.395.36.594a.08.08 0 0 1 .004.09c-.225.353-.46.7-.7 1.043a.08.08 0 0 1-.112.024c-1.757-1.217-3.497-2.467-5.23-3.737a.077.077 0 0 0-.128.01c-.286.422-.593.852-.9 1.272a.076.076 0 0 0-.01.095c.81 1.31 1.67 2.6 2.59 3.864a.078.078 0 0 0 .11.03c3.783-2.375 7.667-4.463 11.6-6.262a.08.08 0 0 1 .077.01c.15.123.3.246.45.368a.08.08 0 0 1-.01.133c-2.194 1.22-4.52 2.293-6.954 3.216a.077.077 0 0 0-.06.063c-.44 1.1-.898 2.19-1.375 3.27a.076.076 0 0 0 .02.086c.433.39.881.76 1.343 1.11a.077.077 0 0 0 .084.007c1.865-1.048 3.854-2.323 5.906-3.83a.082.082 0 0 0 .031-.04c3.762-13.39.7-26.404-8.014-39.03a.07.07 0 0 0-.032-.03z'/%3E%3C/g%3E%3C/svg%3E" alt="Discord" class="discord-logo-3d">
-            </a>
-            <span id="user-email-display" class="user-email" style="margin-right: 16px; color: var(--text-muted); font-size: 14px;"></span>
-            <button onclick="goToSearch()" class="header-btn">
-                <i class="fas fa-home"></i>
-                Recherche
+
+            <div class="header-right">
+                <a
+                    href="https://discord.gg/4dCtyUwzNb"
+                    target="_blank"
+                    class="discord-btn-header"
+                    title="Rejoindre notre serveur Discord"
+                >
+                    <img
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 71 55'%3E%3Cg fill='%23ef4444'%3E%3Cpath d='M60.104 4.897c-5.459-2.426-11.633-4.164-18.115-5.16a.078.078 0 0 0-.079.037c-.211.375-.445.864-.608 1.25a56.68 56.68 0 0 0-16.243 0 12.928 12.928 0 0 0-.617-1.25.077.077 0 0 0-.079-.037c-6.48.996-12.655 2.733-18.115 5.16a.07.07 0 0 0-.032.027C.533 18.142-2.527 31.15 1.08 43.97a.082.082 0 0 0 .031.041c2.052 1.507 4.041 2.782 5.906 3.83a.077.077 0 0 0 .084-.007c.462-.35.91-.72 1.343-1.11a.076.076 0 0 0 .02-.086 40.9 40.9 0 0 1-.72-3.193.077.077 0 0 0-.06-.063c-2.435-.923-4.76-1.995-6.954-3.216a.08.08 0 0 1-.01-.133c.15-.122.3-.245.45-.368a.08.08 0 0 1 .077-.01c3.933 1.8 7.817 3.888 11.6 6.262a.078.078 0 0 0 .11-.029c.92-1.265 1.78-2.554 2.59-3.864a.076.076 0 0 0-.01-.095c-.307-.42-.614-.85-.9-1.272a.077.077 0 0 0-.128-.01c-1.733 1.27-3.473 2.52-5.23 3.737a.08.08 0 0 1-.112-.025c-.24-.342-.475-.69-.7-1.042a.08.08 0 0 1 .004-.09c.12-.2.24-.4.36-.595a.08.08 0 0 1 .083-.039c3.225.734 6.48 1.19 9.754 1.363a5.79 5.79 0 0 0 1.106-1.728 5.627 5.627 0 0 0-10.64-3.88.08.08 0 0 1-.14.048 7.976 7.976 0 0 1-1.203-1.8.077.077 0 0 1 .02-.094c.3-.28.6-.56.91-.83a.09.09 0 0 1 .053-.02c4.12.39 8.24 1.11 12.28 2.08a.08.08 0 0 0 .093-.033c.345-.59.72-1.17 1.12-1.72a.08.08 0 0 0 .01-.07c-1.26-2.35-2.6-4.66-4.02-6.91a.077.077 0 0 0-.128-.02c-.42.32-.84.66-1.24 1.01a.08.08 0 0 1-.11 0c-2.91-2.13-5.82-4.26-8.73-6.4a.08.08 0 0 1-.01-.133c.12-.1.24-.2.37-.29a.08.08 0 0 1 .086-.01c10.49 4.83 21.87 4.83 32.35 0a.08.08 0 0 1 .086.01c.13.09.25.19.37.29a.08.08 0 0 1-.01.133c-2.91 2.14-5.82 4.27-8.73 6.4a.08.08 0 0 1-.11 0c-.4-.35-.82-.69-1.24-1.01a.077.077 0 0 0-.128.02c-1.42 2.25-2.76 4.56-4.02 6.91a.08.08 0 0 0 .01.07c.4.55.775 1.13 1.12 1.72a.08.08 0 0 0 .093.033c4.04-.97 8.16-1.69 12.28-2.08a.09.09 0 0 1 .053.02c.31.27.61.55.91.83a.077.077 0 0 1 .02.094 7.976 7.976 0 0 1-1.203 1.8.08.08 0 0 1-.14-.048 5.627 5.627 0 0 0-10.64 3.88 5.79 5.79 0 0 0 1.106 1.728c3.275-.173 6.53-.63 9.754-1.363a.08.08 0 0 1 .083.04c.12.195.24.395.36.594a.08.08 0 0 1 .004.09c-.225.353-.46.7-.7 1.043a.08.08 0 0 1-.112.024c-1.757-1.217-3.497-2.467-5.23-3.737a.077.077 0 0 0-.128.01c-.286.422-.593.852-.9 1.272a.076.076 0 0 0-.01.095c.81 1.31 1.67 2.6 2.59 3.864a.078.078 0 0 0 .11.03c3.783-2.375 7.667-4.463 11.6-6.262a.08.08 0 0 1 .077.01c.15.123.3.246.45.368a.08.08 0 0 1-.01.133c-2.194 1.22-4.52 2.293-6.954 3.216a.077.077 0 0 0-.06.063c-.44 1.1-.898 2.19-1.375 3.27a.076.076 0 0 0 .02.086c.433.39.881.76 1.343 1.11a.077.077 0 0 0 .084.007c1.865-1.048 3.854-2.323 5.906-3.83a.082.082 0 0 0 .031-.04c3.762-13.39.7-26.404-8.014-39.03a.07.07 0 0 0-.032-.03z'/%3E%3C/g%3E%3C/svg%3E"
+                        alt="Discord"
+                        class="discord-logo-3d"
+                    />
+                </a>
+                <span
+                    id="user-email-display"
+                    class="user-email"
+                    style="
+                        margin-right: 16px;
+                        color: var(--text-muted);
+                        font-size: 14px;
+                    "
+                ></span>
+                <button onclick="goToSearch()" class="header-btn">
+                    <i class="fas fa-home"></i>
+                    Recherche
+                </button>
+                <button onclick="logout()" class="header-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button
+                onclick="showTab('search')"
+                class="nav-tab active"
+                id="tab-search"
+            >
+                <i class="fas fa-search"></i>
+                Recherche API
             </button>
-            <button onclick="logout()" class="header-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                Déconnexion
+            <button onclick="showTab('keys')" class="nav-tab" id="tab-keys">
+                <i class="fas fa-key"></i>
+                Clés d'accès
             </button>
-        </div>
-    </header>
+            <button onclick="showTab('upload')" class="nav-tab" id="tab-upload">
+                <i class="fas fa-upload"></i>
+                Upload
+            </button>
+            <button
+                onclick="showTab('payment')"
+                class="nav-tab"
+                id="tab-payment"
+            >
+                <i class="fas fa-credit-card"></i>
+                Paiement
+            </button>
+        </nav>
 
-    <!-- Navigation Tabs -->
-    <nav class="nav-tabs">
-        <button onclick="showTab('search')" class="nav-tab active" id="tab-search">
-            <i class="fas fa-search"></i>
-            Recherche API
-        </button>
-        <button onclick="showTab('keys')" class="nav-tab" id="tab-keys">
-            <i class="fas fa-key"></i>
-            Clés d'accès
-        </button>
-        <button onclick="showTab('upload')" class="nav-tab" id="tab-upload">
-            <i class="fas fa-upload"></i>
-            Upload
-        </button>
-        <button onclick="showTab('payment')" class="nav-tab" id="tab-payment">
-            <i class="fas fa-credit-card"></i>
-            Paiement
-        </button>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Search API Tab -->
-        <div id="search-tab" class="tab-content active">
-            <div class="page-header-simple">
-                <h2 class="page-title-simple">Modules de Recherche OSINT</h2>
-                <p class="page-subtitle">Sélectionnez un module pour commencer une recherche</p>
-            </div>
-
-            <!-- API Modules Grid - Simplified -->
-            <div class="api-modules-grid-simple">
-                <!-- Will be populated by JS -->
-            </div>
-        </div>
-
-        <!-- Keys Management Tab -->
-        <div id="keys-tab" class="tab-content">
-            <div class="page-header-simple">
-                <h2 class="page-title-simple">Gestion des Clés d'accès</h2>
-            </div>
-
-            <!-- Create Key Card -->
-            <div class="simple-card" style="background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.2);">
-                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin: 0;">
-                        <i class="fas fa-key" style="color: var(--primary);"></i>
-                        Créer une nouvelle clé
-                    </h3>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search API Tab -->
+            <div id="search-tab" class="tab-content active">
+                <div class="page-header-simple">
+                    <h2 class="page-title-simple">
+                        Modules de Recherche OSINT
+                    </h2>
+                    <p class="page-subtitle">
+                        Sélectionnez un module pour commencer une recherche
+                    </p>
                 </div>
-                <div class="simple-card-body">
-                    <div class="form-row">
-                        <div class="form-col" style="flex: 1;">
-                            <label style="display: flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-tag" style="font-size: 12px; color: var(--text-muted);"></i>
-                                Nom de la clé (optionnel)
-                            </label>
-                            <input type="text" id="key-name-input" placeholder="Ex: Clé pour utilisateur X" class="input-simple" style="font-size: 14px;">
-                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Facilite l'identification de la clé</small>
-                        </div>
-                        <div class="form-col" style="flex: 1.5;">
-                            <label style="display: flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-key" style="font-size: 12px; color: var(--text-muted);"></i>
-                                Clé d'accès
-                            </label>
-                            <div class="input-group-simple">
-                                <input type="text" id="new-key-input" placeholder="Générer ou entrer une clé" class="input-simple" style="font-family: monospace; letter-spacing: 1px; font-size: 14px;">
-                                <button onclick="generateKeyInput()" class="btn-secondary" style="white-space: nowrap;">
-                                    <i class="fas fa-random"></i>
-                                    Générer
-                                </button>
-                            </div>
-                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Format recommandé: BH-XXXX-XXXX (minimum 8 caractères)</small>
-                        </div>
-                        <div class="form-col" style="flex: 1;">
-                            <label style="display: flex; align-items: center; gap: 6px;">
-                                <i class="fas fa-clock" style="font-size: 12px; color: var(--text-muted);"></i>
-                                Durée de validité
-                            </label>
-                            <select id="key-duration" class="input-simple" style="font-size: 14px;">
-                                <option value="1h">1 heure</option>
-                                <option value="1d" selected>1 jour</option>
-                                <option value="1w">1 semaine</option>
-                                <option value="1m">1 mois</option>
-                                <option value="lifetime">Lifetime</option>
-                            </select>
-                            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Période de validité de la clé</small>
-                        </div>
-                    </div>
-                    <div class="form-row" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div class="form-col" style="flex: 1;">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; transition: all 0.3s ease;" onmouseenter="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseleave="this.style.background='rgba(239, 68, 68, 0.05)'">
-                                <input type="checkbox" id="key-is-admin" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);">
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; color: var(--text); margin-bottom: 4px;">
-                                        <i class="fas fa-shield-alt" style="color: #ef4444; margin-right: 6px;"></i>
-                                        Clé Admin
-                                    </div>
-                                    <small style="color: var(--text-muted); display: block;">Peut générer d'autres clés et accéder aux fonctionnalités admin</small>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="form-col-auto" style="display: flex; align-items: center;">
-                            <button onclick="createKey()" class="btn-primary" style="min-width: 140px; padding: 12px 24px; font-size: 15px; font-weight: 600;">
-                                <i class="fas fa-plus"></i>
-                                Créer la clé
-                            </button>
-                        </div>
-                    </div>
+
+                <!-- API Modules Grid - Simplified -->
+                <div class="api-modules-grid-simple">
+                    <!-- Will be populated by JS -->
                 </div>
             </div>
 
-            <!-- Check Key Status Card -->
-            <div class="simple-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.3);">
-                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
-                    <h3 style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-search" style="color: var(--primary);"></i>
-                        Vérifier le statut d'une clé
-                    </h3>
-                    <small style="color: var(--text-muted); margin-top: 4px; display: block;">Vérification publique - Aucune authentification requise</small>
+            <!-- Keys Management Tab -->
+            <div id="keys-tab" class="tab-content">
+                <div class="page-header-simple">
+                    <h2 class="page-title-simple">Gestion des Clés d'accès</h2>
                 </div>
-                <div class="simple-card-body">
-                    <div class="form-row">
-                        <div class="form-col" style="flex: 1;">
-                            <label>Code de la clé</label>
-                            <input type="text" id="check-key-input" placeholder="Ex: BH-ZPO3-ZR1D" class="input-simple" style="font-family: monospace; letter-spacing: 1px; font-size: 15px;" onkeypress="if(event.key === 'Enter') checkKeyStatus()">
-                        </div>
-                        <div class="form-col-auto" style="display: flex; align-items: flex-end;">
-                            <button onclick="checkKeyStatus()" class="btn-primary" style="min-width: 120px;">
-                                <i class="fas fa-search"></i>
-                                Vérifier
-                            </button>
-                        </div>
-                    </div>
-                    <div id="key-status-result" style="margin-top: 20px; display: none;">
-                        <!-- Résultat de la vérification -->
-                    </div>
-                </div>
-            </div>
 
-            <!-- Keys List -->
-            <div class="simple-card" style="background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%); border: 1px solid rgba(239, 68, 68, 0.2);">
-                <div class="simple-card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; width: 100%;">
-                        <h3 style="display: flex; align-items: center; gap: 10px; margin: 0;">
-                            <i class="fas fa-list" style="color: var(--primary);"></i>
-                            Clés créées
+                <!-- Create Key Card -->
+                <div
+                    class="simple-card"
+                    style="
+                        background: linear-gradient(
+                            135deg,
+                            rgba(10, 10, 10, 0.95) 0%,
+                            rgba(0, 0, 0, 0.98) 100%
+                        );
+                        border: 1px solid rgba(239, 68, 68, 0.2);
+                    "
+                >
+                    <div
+                        class="simple-card-header"
+                        style="border-bottom: 1px solid rgba(239, 68, 68, 0.2)"
+                    >
+                        <h3
+                            style="
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                margin: 0;
+                            "
+                        >
+                            <i
+                                class="fas fa-key"
+                                style="color: var(--primary)"
+                            ></i>
+                            Créer une nouvelle clé
                         </h3>
-                        <div class="filter-tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button onclick="filterKeys('all')" class="filter-tab active" id="filter-all" style="padding: 8px 16px; font-size: 13px;">
-                                <i class="fas fa-list"></i> Toutes
-                            </button>
-                            <button onclick="filterKeys('active')" class="filter-tab" id="filter-active" style="padding: 8px 16px; font-size: 13px;">
-                                <i class="fas fa-check-circle"></i> Actives
-                            </button>
-                            <button onclick="filterKeys('used')" class="filter-tab" id="filter-used" style="padding: 8px 16px; font-size: 13px;">
-                                <i class="fas fa-user-check"></i> Utilisées
-                            </button>
-                            <button onclick="filterKeys('expired')" class="filter-tab" id="filter-expired" style="padding: 8px 16px; font-size: 13px;">
-                                <i class="fas fa-clock"></i> Expirées
-                            </button>
-                        </div>
                     </div>
-                </div>
-                <div class="simple-card-body" style="padding: 20px;">
-                    <div id="keys-list" class="keys-list-simple" style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- Keys will be displayed here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upload Tab -->
-        <div id="upload-tab" class="tab-content">
-            <div class="page-header-simple">
-                <h2 class="page-title-simple">Uploader une Base de Données</h2>
-            </div>
-
-            <div class="simple-card">
-                <div class="simple-card-body">
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label>Nom de la base de données</label>
-                            <input type="text" id="db-name" placeholder="Nom descriptif" class="input-simple">
-                        </div>
-                        <div class="form-col">
-                            <label>Catégorie</label>
-                            <select id="db-category" class="input-simple">
-                                <option value="general" selected>Général</option>
-                                <option value="breach">Breach</option>
-                                <option value="social">Social Media</option>
-                                <option value="crypto">Crypto</option>
-                                <option value="network">Network</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-col-full">
-                            <label>Description (optionnel)</label>
-                            <textarea id="db-description" placeholder="Description de la base de données" class="input-simple" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-col-full">
-                            <label>Fichier à uploader</label>
-                            <div class="file-upload-simple">
-                                <input type="file" id="db-file" class="file-input-hidden" accept=".txt,.csv,.json" onchange="handleFileSelect(this)">
-                                <button onclick="document.getElementById('db-file').click()" class="btn-secondary">
-                                    <i class="fas fa-folder-open"></i>
-                                    Choisir un fichier
-                                </button>
-                                <span id="file-name" class="file-name-simple">Aucun fichier choisi</span>
+                    <div class="simple-card-body">
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 1">
+                                <label
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                    "
+                                >
+                                    <i
+                                        class="fas fa-tag"
+                                        style="
+                                            font-size: 12px;
+                                            color: var(--text-muted);
+                                        "
+                                    ></i>
+                                    Nom de la clé (optionnel)
+                                </label>
+                                <input
+                                    type="text"
+                                    id="key-name-input"
+                                    placeholder="Ex: Clé pour utilisateur X"
+                                    class="input-simple"
+                                    style="font-size: 14px"
+                                />
+                                <small
+                                    style="
+                                        color: var(--text-muted);
+                                        margin-top: 4px;
+                                        display: block;
+                                    "
+                                    >Facilite l'identification de la clé</small
+                                >
                             </div>
-                            <small>Formats supportés: TXT, CSV, JSON</small>
+                            <div class="form-col" style="flex: 1.5">
+                                <label
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                    "
+                                >
+                                    <i
+                                        class="fas fa-key"
+                                        style="
+                                            font-size: 12px;
+                                            color: var(--text-muted);
+                                        "
+                                    ></i>
+                                    Clé d'accès
+                                </label>
+                                <div class="input-group-simple">
+                                    <input
+                                        type="text"
+                                        id="new-key-input"
+                                        placeholder="Générer ou entrer une clé"
+                                        class="input-simple"
+                                        style="
+                                            font-family: monospace;
+                                            letter-spacing: 1px;
+                                            font-size: 14px;
+                                        "
+                                    />
+                                    <button
+                                        onclick="generateKeyInput()"
+                                        class="btn-secondary"
+                                        style="white-space: nowrap"
+                                    >
+                                        <i class="fas fa-random"></i>
+                                        Générer
+                                    </button>
+                                </div>
+                                <small
+                                    style="
+                                        color: var(--text-muted);
+                                        margin-top: 4px;
+                                        display: block;
+                                    "
+                                    >Format recommandé: BH-XXXX-XXXX (minimum 8
+                                    caractères)</small
+                                >
+                            </div>
+                            <div class="form-col" style="flex: 1">
+                                <label
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                    "
+                                >
+                                    <i
+                                        class="fas fa-clock"
+                                        style="
+                                            font-size: 12px;
+                                            color: var(--text-muted);
+                                        "
+                                    ></i>
+                                    Durée de validité
+                                </label>
+                                <select
+                                    id="key-duration"
+                                    class="input-simple"
+                                    style="font-size: 14px"
+                                >
+                                    <option value="1h">1 heure</option>
+                                    <option value="1d" selected>1 jour</option>
+                                    <option value="1w">1 semaine</option>
+                                    <option value="1m">1 mois</option>
+                                    <option value="lifetime">Lifetime</option>
+                                </select>
+                                <small
+                                    style="
+                                        color: var(--text-muted);
+                                        margin-top: 4px;
+                                        display: block;
+                                    "
+                                    >Période de validité de la clé</small
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="form-row"
+                            style="
+                                margin-top: 20px;
+                                padding-top: 20px;
+                                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                            "
+                        >
+                            <div class="form-col" style="flex: 1">
+                                <label
+                                    style="
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 10px;
+                                        cursor: pointer;
+                                        padding: 12px;
+                                        background: rgba(239, 68, 68, 0.05);
+                                        border: 1px solid rgba(239, 68, 68, 0.2);
+                                        border-radius: 8px;
+                                        transition: all 0.3s ease;
+                                    "
+                                    onmouseenter="
+                                        this.style.background =
+                                            'rgba(239, 68, 68, 0.1)'
+                                    "
+                                    onmouseleave="
+                                        this.style.background =
+                                            'rgba(239, 68, 68, 0.05)'
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        id="key-is-admin"
+                                        style="
+                                            width: 18px;
+                                            height: 18px;
+                                            cursor: pointer;
+                                            accent-color: var(--primary);
+                                        "
+                                    />
+                                    <div style="flex: 1">
+                                        <div
+                                            style="
+                                                font-weight: 600;
+                                                color: var(--text);
+                                                margin-bottom: 4px;
+                                            "
+                                        >
+                                            <i
+                                                class="fas fa-shield-alt"
+                                                style="
+                                                    color: #ef4444;
+                                                    margin-right: 6px;
+                                                "
+                                            ></i>
+                                            Clé Admin
+                                        </div>
+                                        <small
+                                            style="
+                                                color: var(--text-muted);
+                                                display: block;
+                                            "
+                                            >Peut générer d'autres clés et
+                                            accéder aux fonctionnalités
+                                            admin</small
+                                        >
+                                    </div>
+                                </label>
+                            </div>
+                            <div
+                                class="form-col-auto"
+                                style="display: flex; align-items: center"
+                            >
+                                <button
+                                    onclick="createKey()"
+                                    class="btn-primary"
+                                    style="
+                                        min-width: 140px;
+                                        padding: 12px 24px;
+                                        font-size: 15px;
+                                        font-weight: 600;
+                                    "
+                                >
+                                    <i class="fas fa-plus"></i>
+                                    Créer la clé
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-col-full">
-                            <button onclick="uploadDatabase()" class="btn-primary btn-large">
-                                <i class="fas fa-upload"></i>
-                                Uploader
-                            </button>
+                </div>
+
+                <!-- Check Key Status Card -->
+                <div
+                    class="simple-card"
+                    style="
+                        margin-bottom: 20px;
+                        background: linear-gradient(
+                            135deg,
+                            rgba(10, 10, 10, 0.95) 0%,
+                            rgba(0, 0, 0, 0.98) 100%
+                        );
+                        border: 1px solid rgba(239, 68, 68, 0.3);
+                    "
+                >
+                    <div
+                        class="simple-card-header"
+                        style="border-bottom: 1px solid rgba(239, 68, 68, 0.2)"
+                    >
+                        <h3
+                            style="
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                            "
+                        >
+                            <i
+                                class="fas fa-search"
+                                style="color: var(--primary)"
+                            ></i>
+                            Vérifier le statut d'une clé
+                        </h3>
+                        <small
+                            style="
+                                color: var(--text-muted);
+                                margin-top: 4px;
+                                display: block;
+                            "
+                            >Vérification publique - Aucune authentification
+                            requise</small
+                        >
+                    </div>
+                    <div class="simple-card-body">
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 1">
+                                <label>Code de la clé</label>
+                                <input
+                                    type="text"
+                                    id="check-key-input"
+                                    placeholder="Ex: BH-ZPO3-ZR1D"
+                                    class="input-simple"
+                                    style="
+                                        font-family: monospace;
+                                        letter-spacing: 1px;
+                                        font-size: 15px;
+                                    "
+                                    onkeypress="
+                                        if (event.key === 'Enter')
+                                            checkKeyStatus();
+                                    "
+                                />
+                            </div>
+                            <div
+                                class="form-col-auto"
+                                style="display: flex; align-items: flex-end"
+                            >
+                                <button
+                                    onclick="checkKeyStatus()"
+                                    class="btn-primary"
+                                    style="min-width: 120px"
+                                >
+                                    <i class="fas fa-search"></i>
+                                    Vérifier
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            id="key-status-result"
+                            style="margin-top: 20px; display: none"
+                        >
+                            <!-- Résultat de la vérification -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keys List -->
+                <div
+                    class="simple-card"
+                    style="
+                        background: linear-gradient(
+                            135deg,
+                            rgba(10, 10, 10, 0.95) 0%,
+                            rgba(0, 0, 0, 0.98) 100%
+                        );
+                        border: 1px solid rgba(239, 68, 68, 0.2);
+                    "
+                >
+                    <div
+                        class="simple-card-header"
+                        style="border-bottom: 1px solid rgba(239, 68, 68, 0.2)"
+                    >
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                flex-wrap: wrap;
+                                gap: 15px;
+                                width: 100%;
+                            "
+                        >
+                            <h3
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    margin: 0;
+                                "
+                            >
+                                <i
+                                    class="fas fa-list"
+                                    style="color: var(--primary)"
+                                ></i>
+                                Clés créées
+                            </h3>
+                            <div
+                                class="filter-tabs"
+                                style="display: flex; gap: 8px; flex-wrap: wrap"
+                            >
+                                <button
+                                    onclick="filterKeys('all')"
+                                    class="filter-tab active"
+                                    id="filter-all"
+                                    style="padding: 8px 16px; font-size: 13px"
+                                >
+                                    <i class="fas fa-list"></i> Toutes
+                                </button>
+                                <button
+                                    onclick="filterKeys('active')"
+                                    class="filter-tab"
+                                    id="filter-active"
+                                    style="padding: 8px 16px; font-size: 13px"
+                                >
+                                    <i class="fas fa-check-circle"></i> Actives
+                                </button>
+                                <button
+                                    onclick="filterKeys('used')"
+                                    class="filter-tab"
+                                    id="filter-used"
+                                    style="padding: 8px 16px; font-size: 13px"
+                                >
+                                    <i class="fas fa-user-check"></i> Utilisées
+                                </button>
+                                <button
+                                    onclick="filterKeys('expired')"
+                                    class="filter-tab"
+                                    id="filter-expired"
+                                    style="padding: 8px 16px; font-size: 13px"
+                                >
+                                    <i class="fas fa-clock"></i> Expirées
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="simple-card-body" style="padding: 20px">
+                        <div
+                            id="keys-list"
+                            class="keys-list-simple"
+                            style="
+                                display: flex;
+                                flex-direction: column;
+                                gap: 12px;
+                            "
+                        >
+                            <!-- Keys will be displayed here -->
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Payment Tab -->
-        <div id="payment-tab" class="tab-content">
-            <div class="page-header-simple">
-                <h2 class="page-title-simple">Plans et Paiement</h2>
-                <p class="page-subtitle">Choisissez le plan qui correspond à vos besoins</p>
-            </div>
-
-            <!-- Current Subscription Status -->
-            <div class="simple-card" id="current-subscription-card" style="display: none;">
-                <div class="simple-card-header">
-                    <h3>Votre Abonnement</h3>
-                </div>
-                <div class="simple-card-body">
-                    <div id="subscription-status"></div>
-                </div>
-            </div>
-
-            <!-- Payment Plans -->
-            <div class="payment-plans-grid">
-                <!-- Basic Plan -->
-                <div class="payment-plan-card">
-                    <div class="plan-header">
-                        <div class="plan-icon">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <h3>Basic</h3>
-                        <div class="plan-price">
-                            <span class="price-amount">9.99</span>
-                            <span class="price-period">€ /mois</span>
-                        </div>
-                    </div>
-                    <div class="plan-features">
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span><strong>100</strong> recherches/mois</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Accès aux APIs de base</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Support par email</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>1 clé d'accès</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-times"></i>
-                            <span class="feature-disabled">APIs premium</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-times"></i>
-                            <span class="feature-disabled">Clés d'accès illimitées</span>
-                        </div>
-                    </div>
-                    <button onclick="selectPlan('basic')" class="plan-btn">
-                        <i class="fas fa-arrow-right"></i>
-                        Choisir Basic
-                    </button>
+            <!-- Upload Tab -->
+            <div id="upload-tab" class="tab-content">
+                <div class="page-header-simple">
+                    <h2 class="page-title-simple">
+                        Uploader une Base de Données
+                    </h2>
                 </div>
 
-                <!-- Pro Plan -->
-                <div class="payment-plan-card featured">
-                    <div class="plan-badge">⭐ Populaire</div>
-                    <div class="plan-header">
-                        <div class="plan-icon">
-                            <i class="fas fa-star"></i>
+                <div class="simple-card">
+                    <div class="simple-card-body">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>Nom de la base de données</label>
+                                <input
+                                    type="text"
+                                    id="db-name"
+                                    placeholder="Nom descriptif"
+                                    class="input-simple"
+                                />
+                            </div>
+                            <div class="form-col">
+                                <label>Catégorie</label>
+                                <select id="db-category" class="input-simple">
+                                    <option value="general" selected>
+                                        Général
+                                    </option>
+                                    <option value="breach">Breach</option>
+                                    <option value="social">Social Media</option>
+                                    <option value="crypto">Crypto</option>
+                                    <option value="network">Network</option>
+                                </select>
+                            </div>
                         </div>
-                        <h3>Pro</h3>
-                        <div class="plan-price">
-                            <span class="price-amount">29.99</span>
-                            <span class="price-period">€ /mois</span>
+                        <div class="form-row">
+                            <div class="form-col-full">
+                                <label>Description (optionnel)</label>
+                                <textarea
+                                    id="db-description"
+                                    placeholder="Description de la base de données"
+                                    class="input-simple"
+                                    rows="3"
+                                ></textarea>
+                            </div>
                         </div>
-                    </div>
-                    <div class="plan-features">
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span><strong>1000</strong> recherches/mois</span>
+                        <div class="form-row">
+                            <div class="form-col-full">
+                                <label>Fichier à uploader</label>
+                                <div class="file-upload-simple">
+                                    <input
+                                        type="file"
+                                        id="db-file"
+                                        class="file-input-hidden"
+                                        accept=".txt,.csv,.json"
+                                        onchange="handleFileSelect(this)"
+                                    />
+                                    <button
+                                        onclick="
+                                            document
+                                                .getElementById('db-file')
+                                                .click()
+                                        "
+                                        class="btn-secondary"
+                                    >
+                                        <i class="fas fa-folder-open"></i>
+                                        Choisir un fichier
+                                    </button>
+                                    <span
+                                        id="file-name"
+                                        class="file-name-simple"
+                                        >Aucun fichier choisi</span
+                                    >
+                                </div>
+                                <small>Formats supportés: TXT, CSV, JSON</small>
+                            </div>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Accès à <strong>toutes</strong> les APIs</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Support <strong>prioritaire</strong></span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>APIs premium incluses</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Jusqu'à <strong>10</strong> clés d'accès</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Export des résultats</span>
-                        </div>
-                    </div>
-                    <button onclick="selectPlan('pro')" class="plan-btn plan-btn-featured">
-                        <i class="fas fa-rocket"></i>
-                        Choisir Pro
-                    </button>
-                </div>
-
-                <!-- Premium Plan -->
-                <div class="payment-plan-card">
-                    <div class="plan-header">
-                        <div class="plan-icon">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                        <h3>Premium</h3>
-                        <div class="plan-price">
-                            <span class="price-amount">99.99</span>
-                            <span class="price-period">€ /mois</span>
-                        </div>
-                    </div>
-                    <div class="plan-features">
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span><strong>Recherches illimitées</strong></span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Accès à <strong>toutes</strong> les APIs</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Support <strong>24/7</strong></span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>APIs premium + <strong>exclusives</strong></span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span><strong>Clés d'accès illimitées</strong></span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>Accès API en priorité</span>
+                        <div class="form-row">
+                            <div class="form-col-full">
+                                <button
+                                    onclick="uploadDatabase()"
+                                    class="btn-primary btn-large"
+                                >
+                                    <i class="fas fa-upload"></i>
+                                    Uploader
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <button onclick="selectPlan('premium')" class="plan-btn">
-                        <i class="fas fa-gem"></i>
-                        Choisir Premium
-                    </button>
                 </div>
             </div>
 
-            <!-- Payment Form Modal -->
-            <div id="payment-modal" class="payment-modal" style="display: none;">
-                <div class="payment-modal-content">
-                    <div class="payment-modal-header">
-                        <h3>Finaliser le Paiement</h3>
-                        <button onclick="closePaymentModal()" class="modal-close">
-                            <i class="fas fa-times"></i>
+            <!-- Payment Tab -->
+            <div id="payment-tab" class="tab-content">
+                <div class="page-header-simple">
+                    <h2 class="page-title-simple">Plans et Paiement</h2>
+                    <p class="page-subtitle">
+                        Choisissez le plan qui correspond à vos besoins
+                    </p>
+                </div>
+
+                <!-- Current Subscription Status -->
+                <div
+                    class="simple-card"
+                    id="current-subscription-card"
+                    style="display: none"
+                >
+                    <div class="simple-card-header">
+                        <h3>Votre Abonnement</h3>
+                    </div>
+                    <div class="simple-card-body">
+                        <div id="subscription-status"></div>
+                    </div>
+                </div>
+
+                <!-- Payment Plans -->
+                <div class="payment-plans-grid">
+                    <!-- Basic Plan -->
+                    <div class="payment-plan-card">
+                        <div class="plan-header">
+                            <div class="plan-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h3>Basic</h3>
+                            <div class="plan-price">
+                                <span class="price-amount">9.99</span>
+                                <span class="price-period">€ /mois</span>
+                            </div>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    ><strong>100</strong> recherches/mois</span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Accès aux APIs de base</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Support par email</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>1 clé d'accès</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-times"></i>
+                                <span class="feature-disabled"
+                                    >APIs premium</span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-times"></i>
+                                <span class="feature-disabled"
+                                    >Clés d'accès illimitées</span
+                                >
+                            </div>
+                        </div>
+                        <button onclick="selectPlan('basic')" class="plan-btn">
+                            <i class="fas fa-arrow-right"></i>
+                            Choisir Basic
                         </button>
                     </div>
-                    <div class="payment-modal-body">
-                        <div class="selected-plan-info">
-                            <h4 id="selected-plan-name">Plan Pro</h4>
-                            <p class="plan-price-display" id="selected-plan-price">29.99€ / mois</p>
+
+                    <!-- Pro Plan -->
+                    <div class="payment-plan-card featured">
+                        <div class="plan-badge">⭐ Populaire</div>
+                        <div class="plan-header">
+                            <div class="plan-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h3>Pro</h3>
+                            <div class="plan-price">
+                                <span class="price-amount">29.99</span>
+                                <span class="price-period">€ /mois</span>
+                            </div>
                         </div>
-                        
-                        <form id="payment-form" onsubmit="processPayment(event)">
-                            <div class="form-group">
-                                <label>Nom sur la carte</label>
-                                <input type="text" id="card-name" placeholder="Jean Dupont" required>
+                        <div class="plan-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    ><strong>1000</strong> recherches/mois</span
+                                >
                             </div>
-                            <div class="form-group">
-                                <label>Numéro de carte</label>
-                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    >Accès à <strong>toutes</strong> les
+                                    APIs</span
+                                >
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Date d'expiration</label>
-                                    <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>CVV</label>
-                                    <input type="text" id="card-cvv" placeholder="123" maxlength="4" required>
-                                </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    >Support <strong>prioritaire</strong></span
+                                >
                             </div>
-                            <div class="form-group">
-                                <label>Email de facturation</label>
-                                <input type="email" id="billing-email" placeholder="email@example.com" required>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>APIs premium incluses</span>
                             </div>
-                            <button type="submit" class="btn-payment-submit">
-                                <i class="fas fa-lock"></i>
-                                Payer maintenant
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    >Jusqu'à <strong>10</strong> clés
+                                    d'accès</span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Export des résultats</span>
+                            </div>
+                        </div>
+                        <button
+                            onclick="selectPlan('pro')"
+                            class="plan-btn plan-btn-featured"
+                        >
+                            <i class="fas fa-rocket"></i>
+                            Choisir Pro
+                        </button>
+                    </div>
+
+                    <!-- Premium Plan -->
+                    <div class="payment-plan-card">
+                        <div class="plan-header">
+                            <div class="plan-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <h3>Premium</h3>
+                            <div class="plan-price">
+                                <span class="price-amount">99.99</span>
+                                <span class="price-period">€ /mois</span>
+                            </div>
+                        </div>
+                        <div class="plan-features">
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    ><strong
+                                        >Recherches illimitées</strong
+                                    ></span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    >Accès à <strong>toutes</strong> les
+                                    APIs</span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Support <strong>24/7</strong></span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    >APIs premium +
+                                    <strong>exclusives</strong></span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span
+                                    ><strong
+                                        >Clés d'accès illimitées</strong
+                                    ></span
+                                >
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-check"></i>
+                                <span>Accès API en priorité</span>
+                            </div>
+                        </div>
+                        <button
+                            onclick="selectPlan('premium')"
+                            class="plan-btn"
+                        >
+                            <i class="fas fa-gem"></i>
+                            Choisir Premium
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Payment Form Modal -->
+                <div
+                    id="payment-modal"
+                    class="payment-modal"
+                    style="display: none"
+                >
+                    <div class="payment-modal-content">
+                        <div class="payment-modal-header">
+                            <h3>Finaliser le Paiement</h3>
+                            <button
+                                onclick="closePaymentModal()"
+                                class="modal-close"
+                            >
+                                <i class="fas fa-times"></i>
                             </button>
-                        </form>
+                        </div>
+                        <div class="payment-modal-body">
+                            <div class="selected-plan-info">
+                                <h4 id="selected-plan-name">Plan Pro</h4>
+                                <p
+                                    class="plan-price-display"
+                                    id="selected-plan-price"
+                                >
+                                    29.99€ / mois
+                                </p>
+                            </div>
+
+                            <form
+                                id="payment-form"
+                                onsubmit="processPayment(event)"
+                            >
+                                <div class="form-group">
+                                    <label>Nom sur la carte</label>
+                                    <input
+                                        type="text"
+                                        id="card-name"
+                                        placeholder="Jean Dupont"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label>Numéro de carte</label>
+                                    <input
+                                        type="text"
+                                        id="card-number"
+                                        placeholder="1234 5678 9012 3456"
+                                        maxlength="19"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Date d'expiration</label>
+                                        <input
+                                            type="text"
+                                            id="card-expiry"
+                                            placeholder="MM/AA"
+                                            maxlength="5"
+                                            required
+                                        />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>CVV</label>
+                                        <input
+                                            type="text"
+                                            id="card-cvv"
+                                            placeholder="123"
+                                            maxlength="4"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email de facturation</label>
+                                    <input
+                                        type="email"
+                                        id="billing-email"
+                                        placeholder="email@example.com"
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    class="btn-payment-submit"
+                                >
+                                    <i class="fas fa-lock"></i>
+                                    Payer maintenant
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment History -->
+                <div class="simple-card" style="margin-top: 32px">
+                    <div class="simple-card-header">
+                        <h3>Historique des Paiements</h3>
+                    </div>
+                    <div class="simple-card-body">
+                        <div id="payment-history">
+                            <p
+                                style="
+                                    text-align: center;
+                                    color: var(--text-muted);
+                                    padding: 20px;
+                                "
+                            >
+                                Chargement de l'historique...
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </main>
 
-            <!-- Payment History -->
-            <div class="simple-card" style="margin-top: 32px;">
-                <div class="simple-card-header">
-                    <h3>Historique des Paiements</h3>
-                </div>
-                <div class="simple-card-body">
-                    <div id="payment-history">
-                        <p style="text-align: center; color: var(--text-muted); padding: 20px;">
-                            Chargement de l'historique...
+        <!-- API Detail Page -->
+        <div id="api-detail-page" class="api-detail-page">
+            <div class="api-detail-header-simple">
+                <button onclick="closeAPIDetail()" class="btn-back">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="api-header-info">
+                    <div class="api-icon-circle" id="detail-api-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div>
+                        <h1 id="detail-api-name" class="api-name-simple">
+                            Module API
+                        </h1>
+                        <p id="detail-api-subtitle" class="api-subtitle-simple">
+                            Description
                         </p>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <!-- API Detail Page -->
-    <div id="api-detail-page" class="api-detail-page">
-        <div class="api-detail-header-simple">
-            <button onclick="closeAPIDetail()" class="btn-back">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <div class="api-header-info">
-                <div class="api-icon-circle" id="detail-api-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div>
-                    <h1 id="detail-api-name" class="api-name-simple">Module API</h1>
-                    <p id="detail-api-subtitle" class="api-subtitle-simple">Description</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="api-detail-content-simple">
-            <!-- Quick Info -->
-            <div class="info-boxes">
-                <div class="info-box">
-                    <div class="info-box-icon">
-                        <i class="fas fa-tag"></i>
-                    </div>
-                    <div>
-                        <div class="info-box-label">Type</div>
-                        <div class="info-box-value" id="info-type">-</div>
-                    </div>
-                </div>
-                <div class="info-box">
-                    <div class="info-box-icon">
-                        <i class="fas fa-keyboard"></i>
-                    </div>
-                    <div>
-                        <div class="info-box-label">Format</div>
-                        <div class="info-box-value" id="info-format">-</div>
-                    </div>
-                </div>
-                <div class="info-box">
-                    <div class="info-box-icon">
-                        <i class="fas fa-code"></i>
-                    </div>
-                    <div>
-                        <div class="info-box-label">Endpoint</div>
-                        <div class="info-box-value" id="info-endpoint" style="font-family: 'Courier New', monospace; font-size: 11px;">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search Box -->
-            <div class="search-box-simple">
-                <div class="search-box-header">
-                    <h3>Recherche</h3>
-                    <div id="detail-detection-badge" class="status-badge" style="display: none;">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="detail-detection-text"></span>
-                    </div>
-                </div>
-                <div class="search-input-large">
-                    <i class="fas fa-search search-icon-large"></i>
-                    <input 
-                        type="text" 
-                        id="detail-search-input" 
-                        placeholder="Entrez votre recherche..."
-                        class="input-large"
-                        onkeypress="if(event.key === 'Enter') performDetailSearch()"
-                        oninput="detectDetailInputType()"
-                    >
-                    <button onclick="performDetailSearch()" class="btn-search-large">
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-                <div class="examples-box">
-                    <div class="examples-label">Exemples:</div>
-                    <div id="examples-list" class="examples-list">
-                        <!-- Examples will be populated -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- How it Works -->
-            <div class="how-it-works-simple">
-                <h3>
-                    <i class="fas fa-question-circle"></i>
-                    Comment ça fonctionne ?
-                </h3>
-                <div class="steps-simple">
-                    <div class="step-simple">
-                        <div class="step-number-simple">1</div>
-                        <div class="step-content-simple">
-                            <strong>Entrez votre requête</strong>
-                            <p>Saisissez les informations dans le champ de recherche ci-dessus</p>
+            <div class="api-detail-content-simple">
+                <!-- Quick Info -->
+                <div class="info-boxes">
+                    <div class="info-box">
+                        <div class="info-box-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div>
+                            <div class="info-box-label">Type</div>
+                            <div class="info-box-value" id="info-type">-</div>
                         </div>
                     </div>
-                    <div class="step-simple">
-                        <div class="step-number-simple">2</div>
-                        <div class="step-content-simple">
-                            <strong>Lancez la recherche</strong>
-                            <p>Cliquez sur la flèche ou appuyez sur Entrée pour envoyer la requête</p>
+                    <div class="info-box">
+                        <div class="info-box-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <div>
+                            <div class="info-box-label">Format</div>
+                            <div class="info-box-value" id="info-format">-</div>
                         </div>
                     </div>
-                    <div class="step-simple">
-                        <div class="step-number-simple">3</div>
-                        <div class="step-content-simple">
-                            <strong>Consultez les résultats</strong>
-                            <p>Les données trouvées s'affichent automatiquement ci-dessous</p>
+                    <div class="info-box">
+                        <div class="info-box-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div>
+                            <div class="info-box-label">Endpoint</div>
+                            <div
+                                class="info-box-value"
+                                id="info-endpoint"
+                                style="
+                                    font-family:
+                                        &quot;Courier New&quot;, monospace;
+                                    font-size: 11px;
+                                "
+                            >
+                                -
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Results -->
-            <div id="detail-results-section" class="results-section-simple" style="display: none;">
-                <div class="results-header-simple">
+                <!-- Search Box -->
+                <div class="search-box-simple">
+                    <div class="search-box-header">
+                        <h3>Recherche</h3>
+                        <div
+                            id="detail-detection-badge"
+                            class="status-badge"
+                            style="display: none"
+                        >
+                            <i class="fas fa-check-circle"></i>
+                            <span id="detail-detection-text"></span>
+                        </div>
+                    </div>
+                    <div class="search-input-large">
+                        <i class="fas fa-search search-icon-large"></i>
+                        <input
+                            type="text"
+                            id="detail-search-input"
+                            placeholder="Entrez votre recherche..."
+                            class="input-large"
+                            onkeypress="
+                                if (event.key === 'Enter')
+                                    performDetailSearch();
+                            "
+                            oninput="detectDetailInputType()"
+                        />
+                        <button
+                            onclick="performDetailSearch()"
+                            class="btn-search-large"
+                        >
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="examples-box">
+                        <div class="examples-label">Exemples:</div>
+                        <div id="examples-list" class="examples-list">
+                            <!-- Examples will be populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How it Works -->
+                <div class="how-it-works-simple">
                     <h3>
-                        <i class="fas fa-database"></i>
-                        Résultats
-                        <span class="results-badge" id="detail-results-count">0</span>
+                        <i class="fas fa-question-circle"></i>
+                        Comment ça fonctionne ?
                     </h3>
-                    <div class="results-actions-simple">
-                        <button onclick="copyDetailResults()" class="btn-icon">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                        <button onclick="clearDetailResults()" class="btn-icon danger">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div class="steps-simple">
+                        <div class="step-simple">
+                            <div class="step-number-simple">1</div>
+                            <div class="step-content-simple">
+                                <strong>Entrez votre requête</strong>
+                                <p>
+                                    Saisissez les informations dans le champ de
+                                    recherche ci-dessus
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step-simple">
+                            <div class="step-number-simple">2</div>
+                            <div class="step-content-simple">
+                                <strong>Lancez la recherche</strong>
+                                <p>
+                                    Cliquez sur la flèche ou appuyez sur Entrée
+                                    pour envoyer la requête
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step-simple">
+                            <div class="step-number-simple">3</div>
+                            <div class="step-content-simple">
+                                <strong>Consultez les résultats</strong>
+                                <p>
+                                    Les données trouvées s'affichent
+                                    automatiquement ci-dessous
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="detail-results-container" class="results-grid-simple">
-                    <!-- Results will be displayed here -->
+
+                <!-- Results -->
+                <div
+                    id="detail-results-section"
+                    class="results-section-simple"
+                    style="display: none"
+                >
+                    <div class="results-header-simple">
+                        <h3>
+                            <i class="fas fa-database"></i>
+                            Résultats
+                            <span
+                                class="results-badge"
+                                id="detail-results-count"
+                                >0</span
+                            >
+                        </h3>
+                        <div class="results-actions-simple">
+                            <button
+                                onclick="copyDetailResults()"
+                                class="btn-icon"
+                            >
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button
+                                onclick="clearDetailResults()"
+                                class="btn-icon danger"
+                            >
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        id="detail-results-container"
+                        class="results-grid-simple"
+                    >
+                        <!-- Results will be displayed here -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Notification -->
-    <div id="notification" class="notification-simple hidden">
-        <i class="fas fa-check-circle"></i>
-        <span id="notification-text"></span>
-    </div>
+        <!-- Notification -->
+        <div id="notification" class="notification-simple hidden">
+            <i class="fas fa-check-circle"></i>
+            <span id="notification-text"></span>
+        </div>
 
         <script src="config.js"></script>
         <script src="performance-optimizations.js"></script>
         <script src="osint-panel.js"></script>
         <script src="admin-script.js"></script>
         <script src="particles.js"></script>
-    <script>
-        // Force populate modules after all scripts are loaded
-        window.addEventListener('load', () => {
-            console.log('Window loaded, checking API_CONFIG...');
-            if (typeof API_CONFIG !== 'undefined') {
-                console.log('API_CONFIG available on window load, populating modules...');
-                setTimeout(() => {
-                    if (typeof populateAPIModules === 'function') {
-                        populateAPIModules();
-                    } else {
-                        console.error('populateAPIModules function not found');
-                    }
-                }, 500);
-            } else {
-                console.error('API_CONFIG not available on window load');
-            }
-        });
-    </script>
-</body>
+        <script>
+            // Force populate modules after all scripts are loaded
+            window.addEventListener("load", () => {
+                console.log("Window loaded, checking API_CONFIG...");
+                if (typeof API_CONFIG !== "undefined") {
+                    console.log(
+                        "API_CONFIG available on window load, populating modules...",
+                    );
+                    setTimeout(() => {
+                        if (typeof populateAPIModules === "function") {
+                            populateAPIModules();
+                        } else {
+                            console.error(
+                                "populateAPIModules function not found",
+                            );
+                        }
+                    }, 500);
+                } else {
+                    console.error("API_CONFIG not available on window load");
+                }
+            });
+        </script>
+    </body>
 </html>

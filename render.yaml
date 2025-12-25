@@ -18,8 +18,14 @@ services:
         value: false
       - key: FORCE_HTTPS
         value: true
+      - key: PERSISTENT_DIR
+        value: /var/data
+    disk:
+      name: lookup2bz-data
+      mountPath: /var/data
+      sizeGB: 1
     healthCheckPath: /api/health
-    plan: free
+    plan: starter
 
   # Frontend Static
   - type: web
@@ -41,4 +47,3 @@ services:
       - path: /*
         name: X-XSS-Protection
         value: 1; mode=block
-
